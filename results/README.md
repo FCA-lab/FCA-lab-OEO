@@ -1,0 +1,1 @@
+Runs belong in construction/<run_id> or classification/<run_id>. Store actual config, data/split/code identity, status, metrics and predictions. Run files are ignored by Git. Legacy runner naming has not yet been migrated to this protocol.

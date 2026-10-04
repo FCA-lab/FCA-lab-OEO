@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fca-lab-oeo"
+version = "0.1.0"
+description = "OEO concept construction and classification research"
+requires-python = ">=3.9"
+dependencies = ["numpy", "pandas", "scikit-learn", "scipy", "joblib", "threadpoolctl", "openpyxl"]
+
+[project.optional-dependencies]
+test = ["pytest"]
+plot = ["matplotlib"]
+boost = ["xgboost", "lightgbm"]
+
+[project.scripts]
+oeo-classification = "oeo_lab.experiments.classification.run:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["fca_core*", "oeo_lab*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

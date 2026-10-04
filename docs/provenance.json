@@ -1,0 +1,247 @@
+{
+  "plan_sha256": "36cd7a6421eec2e85b8b3e96120284740a8b20917b53dff0beea10844c574859",
+  "authorization": "User approved the displayed plan and mounted the target, then requested continuation.",
+  "source_unchanged": true,
+  "files": [
+    {
+      "id": "copy-001",
+      "source": "src/basic/context.py",
+      "target": "src/fca_core/context.py",
+      "source_sha256": "73c5183ca59d2c5d56deb74905956289b309022a337e2a404d79b0d1d6c59ad6",
+      "action": "copy_then_adjust_imports",
+      "git": "include",
+      "logic_change_in_migration": false,
+      "target_sha256": "df244bbd0b83f853838f9d21dfd00c46468aa47ced66742e060cea3993a8a188"
+    },
+    {
+      "id": "copy-002",
+      "source": "src/basic/concept.py",
+      "target": "src/fca_core/concept.py",
+      "source_sha256": "ac69adee51937e36f61914794940d012f8a2d4d34371ded6d037bdbfc9ec07b9",
+      "action": "copy_then_adjust_imports",
+      "git": "include",
+      "logic_change_in_migration": false,
+      "target_sha256": "a9d583eecc7818204e1a1503cd8d956713038a0af772a1633b554f97bd26055b"
+    },
+    {
+      "id": "copy-003",
+      "source": "src/basic/galois_connect.py",
+      "target": "src/fca_core/operators.py",
+      "source_sha256": "d063e951c964bf558528a2cc915d79b582c5303b85ed8c775c7278bf62e7cdb8",
+      "action": "copy_then_adjust_imports",
+      "git": "include",
+      "logic_change_in_migration": false,
+      "target_sha256": "ac2e7299d134670206a7062f13a449651ce19f4ed61ca5a171ed9761573cf974"
+    },
+    {
+      "id": "copy-004",
+      "source": "src/basic/container.py",
+      "target": "src/fca_core/containers.py",
+      "source_sha256": "6a01cee5c08d6ba2959e9cb6c6f1e036e3891769a53f1e5e751a5c4108f505bd",
+      "action": "copy_then_adjust_imports",
+      "git": "include",
+      "logic_change_in_migration": false,
+      "target_sha256": "f51fdd17ce4a2fc7a1c9593e13e5f41d4dc5a9bed83b2611352daf73a6415be7"
+    },
+    {
+      "id": "copy-005",
+      "source": "src/basic/concept_lattice.py",
+      "target": "src/fca_core/lattice.py",
+      "source_sha256": "dfc9c00818f671d30df172e623f860b33195b4f62bee9c9e37d8a7deada0fd8d",
+      "action": "copy_then_adjust_imports",
+      "git": "include",
+      "logic_change_in_migration": false,
+      "target_sha256": "253258d1762d868d25b1979c7bd811fda5fa4e6cbfe039b66b3e82d265635eec"
+    },
+    {
+      "id": "copy-006",
+      "source": "src/basic/iterator.py",
+      "target": "src/fca_core/iterators.py",
+      "source_sha256": "5365f3b1533113290b0df94555a6a45a06013395469014642abbf8e2b40b2123",
+      "action": "copy_then_adjust_imports",
+      "git": "include",
+      "logic_change_in_migration": false,
+      "target_sha256": "a34d6f42ff3e7dd77a4253413437eb37652bcda1d626309f1eaea447c09f3af9"
+    },
+    {
+      "id": "copy-007",
+      "source": "src/basic/data_source.py",
+      "target": "src/fca_core/data_source.py",
+      "source_sha256": "9603e692bb7baae06aa04f3527c5009fa91ad98b12fefde3b7859a69c470cc2c",
+      "action": "copy_then_adjust_imports",
+      "git": "include",
+      "logic_change_in_migration": false,
+      "target_sha256": "e867260875acd6e85f26df7b0c845ee51ce9221e2432d7e24360ad34e34efeca"
+    },
+    {
+      "id": "copy-008",
+      "source": "src/algorithm/interface_algorithm.py",
+      "target": "src/fca_core/interfaces.py",
+      "source_sha256": "409cf8ee304bbd4f50a6b9efa50c04cf9b6b117161634761ca8d4d69d43204f0",
+      "action": "copy_then_adjust_imports",
+      "git": "include",
+      "logic_change_in_migration": false,
+      "target_sha256": "438e3b895df2383ea10f781e414ebe4bfa089614e890bb6ee7f6b2bb24d7fde1"
+    },
+    {
+      "id": "copy-009",
+      "source": "src/algorithm/classic/three_way_for_obj_4.py",
+      "target": "src/oeo_lab/algorithms/construction/three_woc.py",
+      "source_sha256": "2dab2656c1724a2a1daefd7c47483ba6ecfe3036e2366396bce3e49e136b15cb",
+      "action": "copy_then_adjust_imports",
+      "git": "include",
+      "logic_change_in_migration": false,
+      "target_sha256": "89d7eac93fcfe5d6f4524d770586485a5e8af873d0b68dcb842b122cefcaaea2"
+    },
+    {
+      "id": "copy-010",
+      "source": "src/algorithm/classic/three_woc_level_construct.py",
+      "target": "src/oeo_lab/algorithms/construction/juxtaposition.py",
+      "source_sha256": "9d01185d0c459879dc68d0ef18ba1960f2f072821653488120d64a2d52c8cacf",
+      "action": "copy_then_adjust_imports",
+      "git": "include",
+      "logic_change_in_migration": false,
+      "target_sha256": "c83ab3044d882a7b970b0e4c114efe55d33a606bf730878f4c479f0fb57d5afa"
+    },
+    {
+      "id": "copy-011",
+      "source": "src/algorithm/classic/Object_Oriented_1.py",
+      "target": "src/oeo_lab/algorithms/construction/object_oriented.py",
+      "source_sha256": "1f8e0c7ffabd07ad2370e52bfea906786488bc7194875d10423bac0d56b21678",
+      "action": "copy_then_adjust_imports",
+      "git": "include",
+      "logic_change_in_migration": false,
+      "target_sha256": "69de420b307ced343b61fbc48e9dc27a5c426604af91ab47efea757a87fc2c86"
+    },
+    {
+      "id": "copy-012",
+      "source": "src/algorithm/bitcoin_classificatiion/rc_3woc.py",
+      "target": "src/oeo_lab/algorithms/classification/classifier.py",
+      "source_sha256": "9dd8270d9c4e8eb5e7b5a56fe67ada26756eafcb146c56093dc7ab84aac56622",
+      "action": "copy_then_adjust_imports",
+      "git": "include",
+      "logic_change_in_migration": false,
+      "target_sha256": "e727bb58e1dc66c76be6307f0f85566351b290598cd0e6a409c2796506f6e95b"
+    },
+    {
+      "id": "copy-013",
+      "source": "src/experiments/bitcoin_deanony/encoder.py",
+      "target": "src/oeo_lab/preprocessing/encoding.py",
+      "source_sha256": "491e7bd62e92261160dfe58ce37482e0154a2b189bbb9357815b8a1bb55b90a5",
+      "action": "copy_then_adjust_imports",
+      "git": "include",
+      "logic_change_in_migration": false,
+      "target_sha256": "57ec9fb33eb30b05661d8f716a1509591e5e3ac26b7b05adaa0c8cea3d8d1f01"
+    },
+    {
+      "id": "copy-014",
+      "source": "src/experiments/bitcoin_deanony/data.py",
+      "target": "src/oeo_lab/experiments/classification/datasets.py",
+      "source_sha256": "7508331d89e44852e6d795f716bfb1421df318adae489f98be7faf6712d5dd52",
+      "action": "copy_then_adjust_imports",
+      "git": "include",
+      "logic_change_in_migration": false,
+      "target_sha256": "7508331d89e44852e6d795f716bfb1421df318adae489f98be7faf6712d5dd52"
+    },
+    {
+      "id": "copy-015",
+      "source": "src/experiments/bitcoin_deanony/config.py",
+      "target": "src/oeo_lab/experiments/classification/config.py",
+      "source_sha256": "1c933190e438690fd6ff349fc99367681b0ae158a4894efdc7fd4f23f7353074",
+      "action": "copy_then_adjust_imports",
+      "git": "include",
+      "logic_change_in_migration": false,
+      "target_sha256": "729f2fa14e73bb7e6a4ef5b65060049b626d605aed3af7bd7bff52e505455ef0"
+    },
+    {
+      "id": "copy-016",
+      "source": "src/experiments/bitcoin_deanony/models.py",
+      "target": "src/oeo_lab/experiments/classification/baselines.py",
+      "source_sha256": "fe93a7f02547bf15a758206c3300b90bc6246734716652c17f86942dc2d96791",
+      "action": "copy_then_adjust_imports",
+      "git": "include",
+      "logic_change_in_migration": false,
+      "target_sha256": "ca1bb4024b1c977e9ef92db2637aecb805e42903eb388fec9e1074f825d87c6a"
+    },
+    {
+      "id": "copy-017",
+      "source": "src/experiments/bitcoin_deanony/evaluate.py",
+      "target": "src/oeo_lab/experiments/classification/evaluate.py",
+      "source_sha256": "94c3cc3e3885226f03728076e0c93dd716ff026dd2ae8d921cad2235fa2b7db8",
+      "action": "copy_then_adjust_imports",
+      "git": "include",
+      "logic_change_in_migration": false,
+      "target_sha256": "cd99dd1b48ab91655f95e52aa6edff32a863068f5343091c2d4da40f64a71074"
+    },
+    {
+      "id": "copy-018",
+      "source": "src/experiments/bitcoin_deanony/runner.py",
+      "target": "src/oeo_lab/experiments/classification/runner.py",
+      "source_sha256": "e842a7f9f670fb0cd19d2fd13312b2968e57837c3c6ccdb5f61009182d994dc9",
+      "action": "copy_then_adjust_imports",
+      "git": "include",
+      "logic_change_in_migration": false,
+      "target_sha256": "bf85c03f47e69f9830bd2093881f38a9dd4781998d1c95af2cbf6c9efe61794f"
+    },
+    {
+      "id": "copy-019",
+      "source": "src/experiments/bitcoin_deanony/main.py",
+      "target": "src/oeo_lab/experiments/classification/run.py",
+      "source_sha256": "ce781e5e222a3bb3dfab72d613e7bc9f8817dbc1f0355b55f2b48420e9e68ab1",
+      "action": "copy_then_adjust_imports",
+      "git": "include",
+      "logic_change_in_migration": false,
+      "target_sha256": "8f8c256969739720622b6a184d6675619b56d168bb8ca58d8c52a891207e8d07"
+    },
+    {
+      "id": "copy-020",
+      "source": "src/experiment/three_way_OC/CompletenessExp.py",
+      "target": "src/oeo_lab/experiments/construction/check_completeness.py",
+      "source_sha256": "1716586ed408bb4f62b12618de8fafff30353c5bab66da6bf48cdbb19dbbc595",
+      "action": "copy_then_adjust_imports",
+      "git": "include",
+      "logic_change_in_migration": false,
+      "target_sha256": "fd5ef5830058f16e122fd8d33bfe161962b21a27c69f1645766f2c5b5dbc9c19"
+    },
+    {
+      "id": "copy-021",
+      "source": "src/experiment/three_way_OC/timeConsumingExperiment.py",
+      "target": "src/oeo_lab/experiments/construction/run_examples.py",
+      "source_sha256": "9c8d900bcedd88f198f2b5017f73c921a7063128d8d603b3a8b69fd669d99c04",
+      "action": "copy_then_adjust_imports",
+      "git": "include",
+      "logic_change_in_migration": false,
+      "target_sha256": "279dc8ccd7658a85f593e888364010ab8329440ca0bcfd8dec51a81773f59dec"
+    },
+    {
+      "id": "copy-022",
+      "source": "src/experiment/three_way_OC/experiment2.py",
+      "target": "src/oeo_lab/experiments/construction/run_synthetic.py",
+      "source_sha256": "fc5be87be0e1503e842130c174abfde9a5eb750cae06a7a0965df4146204142c",
+      "action": "copy_then_adjust_imports",
+      "git": "include",
+      "logic_change_in_migration": false,
+      "target_sha256": "43596468663b9d0fdc5539a46e1c39fbcdbfaa16005c708aae89234e5ab794d9"
+    },
+    {
+      "id": "copy-023",
+      "source": "src/experiment/three_way_OC/uciExperiment.py",
+      "target": "src/oeo_lab/experiments/construction/run_datasets.py",
+      "source_sha256": "824b6867019f799ccf67e97e72f2aca0b19ef384a4a499ae611b6d55839f3794",
+      "action": "copy_then_adjust_imports",
+      "git": "include",
+      "logic_change_in_migration": false,
+      "target_sha256": "598b0aa1e11493f2eed3069509e82958117ef59325b86df70b46ddb7c6c98a52"
+    },
+    {
+      "id": "copy-024",
+      "source": "src/experiment/three_way_OC/draw.py",
+      "target": "analysis/construction/plot_legacy.py",
+      "source_sha256": "cc28abf15af653d358bf80e8221c10c6069d96f52a4dddaecc277ce41e7f0be1",
+      "action": "copy_then_adjust_imports",
+      "git": "include",
+      "logic_change_in_migration": false,
+      "target_sha256": "62a1d21bb55c61a0f213d9994f102615c631bcdb68e1bec76c42b92a1425ac46"
+    }
+  ]
+}
