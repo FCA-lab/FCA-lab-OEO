@@ -24,3 +24,6 @@ include = ["fca_core*", "oeo_lab*"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
+
+[tool.setuptools.package-data]
+"oeo_lab.experiments.construction" = ["config.json"]

@@ -45,24 +45,23 @@ class NewThreeWayForObj(abc_algorithm):
             result.append([obj_set, i])
         return result
 
+
     def get_base_OEOs(self, single_att_concepts, comple_single_att_concepts):
         base_OEOs = list()
         all_sac = list()
         all_sac.extend(single_att_concepts)
         all_sac.extend(comple_single_att_concepts)
         for sac in all_sac:
-            if sac[0]:
-                X = set(sac[0])
-                Y = list()
-                Z = list()
-                for i in single_att_concepts:
-                    if i[0] and set(i[0]).issubset(X):
-                        Y.append(i[1])
-                for j in comple_single_att_concepts:
-                    if j[0] and set(j[0]).issubset(X):
-                        Z.append(j[1])
-                base_OEOs.append([X, [Y, Z]])
-
+            X = set(sac[0])
+            Y = list()
+            Z = list()
+            for i in single_att_concepts:
+                if set(i[0]).issubset(X):
+                    Y.append(i[1])
+            for j in comple_single_att_concepts:
+                if set(j[0]).issubset(X):
+                    Z.append(j[1])
+            base_OEOs.append([X, [Y, Z]])
         return base_OEOs
     def necessary_obj2att(self, context, objs):
         intent=set()
@@ -106,9 +105,6 @@ class NewThreeWayForObj(abc_algorithm):
                                 self.ref[length][c3[0]] = c3
                         else:
                             self.ref[length] = {c3[0]: c3}
-
-
-
 
     def fn_num2objs(self, num):
         res = set()

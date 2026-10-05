@@ -1,0 +1,139 @@
+{
+  "experiment_type": "zhang2025_construction",
+  "algorithms": [
+    "3woc",
+    "qm"
+  ],
+  "real_datasets": [
+    {
+      "name": "balloons",
+      "kind": "categorical",
+      "path": "data/raw/uci/balloons/adult+stretch.data",
+      "format": "csv",
+      "expected_shape": [
+        20,
+        10
+      ],
+      "paper_concepts": 91
+    },
+    {
+      "name": "lenses",
+      "kind": "categorical",
+      "path": "data/raw/uci/lenses/lenses.data",
+      "format": "whitespace",
+      "expected_shape": [
+        24,
+        12
+      ],
+      "paper_concepts": 229,
+      "note": "Independent enumeration gives 292; paper count is not a pass criterion."
+    },
+    {
+      "name": "covid19",
+      "kind": "categorical",
+      "path": "data/raw/uci/covid19_surveillance/Surveillance.csv",
+      "format": "csv",
+      "header": true,
+      "expected_shape": [
+        14,
+        17
+      ],
+      "paper_concepts": 139
+    }
+  ],
+  "example": {
+    "name": "table1",
+    "kind": "matrix",
+    "matrix": [
+      [
+        1,
+        0,
+        1,
+        1,
+        1
+      ],
+      [
+        1,
+        0,
+        1,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        1,
+        1,
+        0,
+        0,
+        1
+      ]
+    ]
+  },
+  "synthetic": {
+    "objects": [
+      10,
+      20,
+      30,
+      40
+    ],
+    "attributes": [
+      5,
+      10
+    ],
+    "densities": [
+      0.1,
+      0.2,
+      0.3,
+      0.4,
+      0.5,
+      0.6
+    ],
+    "repeats": 5,
+    "base_seed": 2025
+  },
+  "execution": {
+    "n_jobs": 1,
+    "min_free_gb": 2,
+    "worker_ramp_sec": 0.2,
+    "memory_wait_timeout_sec": 300,
+    "task_timeout_sec": null
+  },
+  "output": {
+    "root": "results/construction",
+    "checkpoint_dir": "checkpoints",
+    "checkpoint_template": "{task_id}.json",
+    "files": {
+      "results": {
+        "real": "real_results.xlsx",
+        "synthetic": "synthetic_results.xlsx",
+        "example": "example_results.xlsx"
+      }
+    },
+    "checkpoint_index": "index.json"
+  },
+  "plot": {
+    "directory": "figures",
+    "formats": [
+      "png",
+      "pdf"
+    ],
+    "dpi": 600,
+    "files": {
+      "concepts": "concepts_att{attributes}",
+      "time": "time_{algorithm}_att{attributes}"
+    }
+  }
+}
