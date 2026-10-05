@@ -48,6 +48,66 @@ METRIC_COLS = ["准确率", "宏平均精确率", "宏平均召回率", "宏平�
                "MCC", "Runtime", "Num of rules", "条件属性数M", "训练集去重数"]
 
 
+def evaluate_predictions(y_true, y_pred, labels):
+    """统一评价普通分类与延迟分类；None 专用于 defer，不能作为真实类别。
+
+    labels 必须传入整个任务的类别集合，不能按当前折或预测结果缩减。
+    返回四项指标、原始计数和每类 TP/FP/FN；不把 defer 作为额外类别。
+    空测试集与未知标签视为输入错误；全部 defer 时条件准确率为 NaN。
+    """
+    truth = np.asarray(y_true, dtype=object)
+    prediction = np.asarray(y_pred, dtype=object)
+    classes = np.asarray(labels, dtype=object)
+    if truth.ndim != 1 or prediction.ndim != 1 or classes.ndim != 1:
+        raise ValueError('Labels and predictions must be one-dimensional')
+    if not len(truth) or len(truth) != len(prediction) or not len(classes):
+        raise ValueError('Nonempty, equally sized truth/prediction arrays are required')
+    # 不通过字符串转换统一类别，避免把整数标签与同名字符串混为一类。
+    lookup = {}
+    for i, label in enumerate(classes):
+        if label is None or pd.isna(label):
+            raise ValueError('Task classes cannot contain None or missing values')
+        if label in lookup:
+            raise ValueError('Duplicate task class')
+        lookup[label] = i
+    actual, predicted = [], []
+    for true, pred in zip(truth, prediction):
+        if true is None or pd.isna(true) or true not in lookup:
+            raise ValueError(f'Unknown or missing true class: {true!r}')
+        actual.append(lookup[true])
+        if pred is None:
+            predicted.append(-1)  # 内部索引，不占用任何用户类别值。
+        elif pd.isna(pred) or pred not in lookup:
+            raise ValueError(f'Unknown or missing predicted class: {pred!r}')
+        else:
+            predicted.append(lookup[pred])
+    actual, predicted = np.asarray(actual), np.asarray(predicted)
+    classified = predicted >= 0
+    total = len(actual)
+    accepted = int(classified.sum())
+    correct = int((actual == predicted).sum())
+    per_class = []
+    for i, label in enumerate(classes):
+        tp = int(((actual == i) & (predicted == i)).sum())
+        fp = int(((actual != i) & (predicted == i)).sum())
+        # defer 对真实类别贡献 FN，但不对任何类别贡献 FP。
+        fn = int(((actual == i) & (predicted != i)).sum())
+        denominator = 2 * tp + fp + fn
+        per_class.append({'label': label, 'tp': tp, 'fp': fp, 'fn': fn,
+                          'support': int((actual == i).sum()),
+                          'deferred': int(((actual == i) & ~classified).sum()),
+                          'f1': 2 * tp / denominator if denominator else 0.0})
+    return {
+        'n_test': total, 'n_classified': accepted, 'n_correct': correct,
+        'n_deferred': total - accepted,
+        'coverage': accepted / total,
+        'classified_accuracy': correct / accepted if accepted else float('nan'),
+        'overall_correct_rate': correct / total,
+        'macro_f1': float(np.mean([row['f1'] for row in per_class])),
+        'per_class': per_class,
+    }
+
+
 def _fresh(model):
     try:
         return clone(model)
@@ -223,3 +283,100 @@ def aggregate_model(seed_results, n_seeds_expected, fold):
     return {"max_bin": max_bin, "frac": frac, "model_name": model_name,
             "fold_rows": fold_rows, "summary_row": summary,
             "confusion_rows": confusion_rows, "report_rows": report_rows}
+
+
+def _rule_audit(model, X_test, y_test):
+    """逐条单文字项规则统计支持度及测试触发正确数，不用测试结果筛选规则。"""
+    records = []
+    for n, groups in model.RuleSet_.items():
+        for kind, attributes in zip(('A1','A2','B1','B2'), groups):
+            for a in sorted(attributes):
+                positive_literal = kind in ('A1','B1')
+                trigger = X_test[:, a] == (1 if positive_literal else 0)
+                correct = y_test == model.classes_[n]
+                if kind in ('B1','B2'):
+                    correct = ~correct
+                support = (model.support_pos_ if positive_literal else model.support_neg_)[a]
+                count = int(trigger.sum())
+                right = int((trigger & correct).sum())
+                records.append({'type':kind, 'attribute':int(a), 'class':int(model.classes_[n]),
+                    'train_support':int(support), 'test_triggers':count, 'test_correct':right,
+                    'test_precision':right/count if count else None})
+    return records
+
+
+def _defer_reasons(model, X_test, predictions, voting):
+    """只诊断 defer 样本：无有效贡献，或经训练比例比较后仍并列。"""
+    empty = ties = 0
+    for sample, prediction in zip(X_test, predictions):
+        if prediction is not None:
+            continue
+        present = set(np.flatnonzero(sample))
+        evidence = False
+        for U,V,Q,R in model.RuleSet_.values():
+            for attributes, supports in ((U & present,model.support_pos_),
+                    (V-present,model.support_neg_), (Q & present,model.support_pos_),
+                    (R-present,model.support_neg_)):
+                if any(voting == 'uniform' or supports[a] > 0 for a in attributes):
+                    evidence = True
+        if evidence: ties += 1
+        else: empty += 1
+    return empty, ties
+
+
+def evaluate_fold(task):
+    """一个任务=一个折×一个模型×一个输入设置；OEO 一次 fit 服务三种策略。"""
+    from .datasets import load_numeric_dataset
+    from .baselines import create_model
+    if task['dataset'].get('kind') == 'bitcoin':
+        from .bitcoin_data import load_bitcoin_dataset
+        X,y,labels,_ = load_bitcoin_dataset(task['dataset'])
+    else:
+        X,y,labels = load_numeric_dataset(task['dataset'])
+    train, test = task['split']['train_indices'], task['split']['test_indices']
+    X_train, X_test = X.iloc[train], X.iloc[test]
+    y_train, y_test = y[train], y[test]
+    encoder = None
+    start = time.perf_counter()
+    if task['model']['input'] == 'context':
+        encoder = LeakFreeContextEncoder(list(X.columns), task['max_bins'], task['min_data_in_bin'])
+        X_train = encoder.fit_transform(X_train).to_numpy()
+        preprocessing_fit_seconds = time.perf_counter() - start
+        start = time.perf_counter()
+        X_test = encoder.transform(X_test).to_numpy()
+        preprocessing_test_seconds = time.perf_counter() - start
+    else:
+        X_train, X_test = X_train.to_numpy(), X_test.to_numpy()
+        preprocessing_fit_seconds = preprocessing_test_seconds = 0.0
+    model = create_model(task['model'], task['split']['seed'])
+    start = time.perf_counter()
+    model.fit(X_train,y_train)
+    fit_seconds = time.perf_counter() - start
+    is_oeo = task['model']['estimator']=='oeo'
+    variants = task['voting'] if is_oeo else [None]
+    results = []
+    for voting in variants:
+        if is_oeo: model.voting = voting
+        start = time.perf_counter()
+        prediction = model.predict(X_test)
+        predict_seconds = time.perf_counter() - start
+        scores = evaluate_predictions(y_test, prediction, list(range(len(labels))))
+        empty,ties = _defer_reasons(model,X_test,prediction,voting) if is_oeo else (0,0)
+        assert empty+ties == scores['n_deferred']
+        # JSON 不使用非标准 NaN；未定义的条件准确率保存为 null，Excel 中为空。
+        if not np.isfinite(scores['classified_accuracy']): scores['classified_accuracy'] = None
+        results.append({'voting':voting or 'baseline', **scores,
+            'predict_seconds':predict_seconds, 'defer_no_evidence':empty, 'defer_tie':ties})
+    rules = _rule_audit(model,X_test,y_test) if is_oeo else []
+    metadata = None if encoder is None else {
+        'columns':[str(c) for c in encoder.columns_],
+        'bins':{str(c):[float(b) if np.isfinite(b) else None for b in bounds]
+                for c,bounds in encoder.bins_.items()}}
+    return {'results':results, 'fit_seconds':fit_seconds,
+        'preprocessing_fit_seconds':preprocessing_fit_seconds,
+        'preprocessing_test_seconds':preprocessing_test_seconds,
+        'train_seconds':preprocessing_fit_seconds+fit_seconds,
+        'n_train':len(train), 'attributes':X_train.shape[1],
+        'classes':labels, 'encoding':metadata, 'rules':rules,
+        'rule_count':len(rules) if is_oeo else None,
+        'zero_support_rules':sum(r['train_support']==0 for r in rules) if is_oeo else None}

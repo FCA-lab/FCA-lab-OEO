@@ -123,3 +123,24 @@ def build_models(random_seed=42, include_raw=None):
         if HAS_LGBM:
             m["LightGBM (raw)"] = (LGBMClassifier(n_estimators=300, n_jobs=1, random_state=random_seed, verbose=-1), "raw")
     return m
+
+
+def create_model(spec, seed):
+    """按显式配置创建一个模型；缺失依赖报错，绝不静默跳过。"""
+    name, params = spec['estimator'], dict(spec['params'])
+    if name == 'dummy':
+        return DummyClassifier(**params)
+    if name == 'decision_tree':
+        return DecisionTreeClassifier(**dict(params, random_state=seed))
+    if name == 'random_forest':
+        return RandomForestClassifier(**dict(params, random_state=seed, n_jobs=1))
+    if name == 'xgboost':
+        from xgboost import XGBClassifier
+        return XGBClassifier(**dict(params, random_state=seed, n_jobs=1))
+    if name == 'svm_rbf':
+        # Pipeline 确保标准化只拟合训练折；其耗时属于 fit/predict。
+        return make_pipeline(StandardScaler(), SVC(**dict(params, random_state=seed)))
+    if name == 'oeo':
+        from oeo_lab.algorithms.classification.classifier import RC_3Woc
+        return RC_3Woc(**params)
+    raise ValueError(f'Unknown model: {name}')

@@ -13,16 +13,17 @@
 import numpy as np
 import pandas as pd
 
-from .config import COL_NAMES, LABEL_FROM, LABEL_OFFSET, N_CLASS
+from .config import COL_NAMES, LABEL_FROM, LABEL_OFFSET, BITCOIN_CLASS_IDS
 
 GROUP_COL = "label_id"   # 实体分组键: 同一实体(钱包/服务)控制的所有地址
 
 
 def load_raw(dataset_csv):
-    """读取原始连续特征(分箱前)。label = cate_id - 1, 仅保留 N_CLASS 个类别。"""
+    """读取原始连续特征(分箱前)。label = cate_id - 1, 按配置的原始类别清单过滤。"""
     df = pd.read_csv(dataset_csv).copy()
+    # 使用明确类别集合，而不是上界比较，避免纳入意外的类别编号。
+    df = df[df[LABEL_FROM].isin(BITCOIN_CLASS_IDS)].copy().reset_index(drop=True)
     df["label"] = df[LABEL_FROM] - LABEL_OFFSET
-    df = df[df["label"] < N_CLASS].reset_index(drop=True)
     labels = sorted(df["label"].unique())
     return df, labels
 
@@ -52,3 +53,23 @@ def dedup_xy(X_df, y):
     X_out = pd.DataFrame(X_df).reset_index(drop=True).loc[keep.values].reset_index(drop=True)
     y_out = pd.Series(y_arr[keep.values]).reset_index(drop=True)
     return X_out, y_out
+
+
+def load_numeric_dataset(spec):
+    """读取 UCI 数值数据；不采样、不去重、不分箱。类别编码映射随结果返回。"""
+    import hashlib
+    from pathlib import Path
+    path = Path(spec['path'])
+    if hashlib.sha256(path.read_bytes()).hexdigest() != spec['sha256']:
+        raise ValueError('Dataset changed after task creation')
+    frame = pd.read_csv(path, header=None, dtype=str)
+    if frame.empty or frame.isna().any().any():
+        raise ValueError('Empty or missing UCI data')
+    labels = sorted(frame[spec['decision_column']].unique())
+    mapping = {label: i for i, label in enumerate(labels)}
+    y = frame[spec['decision_column']].map(mapping).to_numpy(dtype=int)
+    features = frame.drop(columns=[spec['decision_column']] + spec['id_columns'])
+    X = features.apply(pd.to_numeric, errors='raise')
+    if not np.isfinite(X.to_numpy()).all():
+        raise ValueError('Nonfinite numeric features')
+    return X, y, labels

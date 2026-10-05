@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """全局配置:特征列、实验网格、行为开关。集中管理便于复现与调参。"""
 import os
+from pathlib import Path
 
 # 要分箱的连续特征列(与原 BitcoinAddress2Context 一致)
 COL_NAMES = ["avgUseGap", "label_cnt", "balance", "total_received", "received_cnt",
@@ -18,10 +19,11 @@ LEAKED_FEATURES = ['label_cnt']  # 明确标记泄漏特征
 USE_LEAKED_FEATURES = False   # 唯一开关：True=含label_cnt(历史)，False=无泄漏(新)
 COL_NAMES = COL_NAMES_LEAK if USE_LEAKED_FEATURES else COL_NAMES_NO_LEAK
 
-# 标签来源: label = cate_id - 1, 仅保留 label < N_CLASS 的类别
+# Bitcoin 分类范围：明确保留原始类别 1—4，第 5 类不纳入。
 LABEL_FROM = "cate_id"
 LABEL_OFFSET = 1          # label = cate_id - LABEL_OFFSET
-N_CLASS = 4               # 仅保留 4 个行业类别
+BITCOIN_CLASS_IDS = (1, 2, 3, 4)
+N_CLASS = len(BITCOIN_CLASS_IDS)
 
 # 实验网格
 DEFAULT_MAX_BINS = [250, 300, 350, 400, 450, 500]
@@ -31,9 +33,10 @@ DEFAULT_FOLD = 5
 RANDOM_SEED = 42
 
 # 行为开关
-DEDUP_TRAIN = True            # 划分后仅对训练集去重(X/y 同步), 测试集绝不去重
+DEDUP_TRAIN = False           # 保留训练、测试中的原始样本，不进行去重
 INCLUDE_RAW_BASELINES = True  # 额外加入"原始连续特征"对照组(树模型不分箱)
-RESULTS_ROOT = "./results"
+PROJECT_ROOT = Path(__file__).resolve().parents[4]
+RESULTS_ROOT = str(PROJECT_ROOT / "results" / "classification")
 
 
 def default_dataset_csv():
@@ -76,3 +79,55 @@ def stats_dir(results_root):
 
 def stats_file(out_dir, frac, group_tag, protocol, metric):
     return f"{out_dir}/frac_{frac}_{group_tag}{proto_suffix(protocol)}_显著性_{metric}.xlsx"
+
+# 分类实验的数据登记。列编号从 0 开始；决策列和 ID 列不得作为条件特征。
+DATASETS = {
+    "balloons": {"path": "raw/uci/balloons/adult+stretch.data", "format": "csv",
+                 "decision_column": 4, "id_columns": [], "feature_kind": "categorical"},
+    "lenses": {"path": "raw/uci/lenses/lenses.data", "format": "whitespace",
+               "decision_column": 5, "id_columns": [0], "feature_kind": "categorical"},
+    "iris": {"path": "raw/uci/iris/iris.data", "format": "csv",
+             "decision_column": 4, "id_columns": [], "feature_kind": "numerical"},
+    "wine": {"path": "raw/uci/wine/wine.data", "format": "csv",
+             "decision_column": 0, "id_columns": [], "feature_kind": "numerical"},
+    "wdbc": {"path": "raw/uci/wdbc/wdbc.data", "format": "csv",
+             "decision_column": 1, "id_columns": [0], "feature_kind": "numerical"},
+    "bitcoin": {"path": "raw/bitcoin/getFeatures.csv", "format": "csv",
+                "decision_column": LABEL_FROM, "feature_columns": COL_NAMES,
+                "feature_kind": "numerical"},
+}
+
+
+# UCI 分箱网格需在分类流程接入时单独确定，不套用 Bitcoin 的高分箱数。
+CLASSIFICATION = {
+    "datasets": ["bitcoin", "iris", "wine", "wdbc"],
+    "preprocessing": {
+        "bitcoin": {"max_bins": DEFAULT_MAX_BINS, "min_data_in_bin": 3},
+        # 数值 UCI 分类网格待确定，不借用完备性实验的探测设置。
+        "iris": None, "wine": None, "wdbc": None,
+    },
+    "execution": {"n_jobs": 1, "task_timeout_sec": None},
+    "voting_strategies": ["uniform", "nonzero", "support"],
+    "dedup_train": DEDUP_TRAIN,
+    "seeds": DEFAULT_CV_SEEDS,
+    "folds": DEFAULT_FOLD,
+    "fractions": DEFAULT_FRACS,
+}
+EXECUTION = {
+    "n_jobs": 1, "tasks_per_worker": 1, "resume": True,
+    "keep_partial": True, "min_free_gb": 2.0, "worker_ramp_sec": 0.2,
+    # 以下两个参数由后续公共任务管理接口读取，旧 runner 暂不支持。
+    "memory_wait_timeout_sec": 300, "task_timeout_sec": None,
+}
+# 分类入口仍使用上面的旧文件名函数，待后续改造。
+OUTPUT = {
+    "root": RESULTS_ROOT,
+    "files": { "classification": "classification_results.xlsx"},
+    "checkpoint_dir": "checkpoints", "checkpoint_index": "index.json",
+    "checkpoint_template": "{task_id}.json",
+}
+
+
+def dataset_path(name):
+    root = Path(os.environ.get("OEO_DATA_ROOT", PROJECT_ROOT / "data"))
+    return root / DATASETS[name]["path"]

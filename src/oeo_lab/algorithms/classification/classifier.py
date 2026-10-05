@@ -23,152 +23,85 @@ import time
 import pandas as pd
 from fca_core.context import formal_context
 from fca_core.data_source import data_set
+from oeo_lab.algorithms.construction.three_woc import NewThreeWayForObj
 #################
 
 
-class RC_3Woc(BaseEstimator, ClassifierMixin):
-    def __init__(self, rule_type=1, threshold=0.5, normalize_confidence=True):
+class RC_3Woc(ClassifierMixin, BaseEstimator, NewThreeWayForObj):
+    def __init__(self, rule_type=1, threshold=0.5, normalize_confidence=True,
+                 voting="uniform"):
         self.threshold = threshold
         self.RuleSet_= dict()
         self.rule_type = rule_type  # rule_type: 1,positive; 2,negative; 3, all
         self.normalize_confidence = normalize_confidence
+        self.voting = voting  # 新预测方法：uniform、nonzero 或 support。
 
     @staticmethod
-    def gen_complement_context(ls):
-        res = []
-        for row in ls:
-            tmp = list()
-            for element in row:
-                if element == 1:
-                    tmp.append(0)
-                elif element == 0:
-                    tmp.append(1)
-            res.append(tmp)
-        return res
-
-    def get_single_att_concepts(self, cur_context):
-        att_num = cur_context.att_num  # 获得所有的属性
-        result = list()
-        for i in range(att_num):  # 对属性进行遍历
-            obj_set = cur_context.att2obj({i})  # 通过属性映射获得对象集合
-            # 下面根据对象集合的大小（即数量）进行索引，以便下一步按照集合大小顺序进行生成概念
-            # if len(obj_set) > 0:
-            result.append([obj_set, i])
-        return result
-
-    def get_base_OEOs(self, single_att_concepts, comple_single_att_concepts):
-        base_OEOs = list()
-        all_sac = list()
-        all_sac.extend(single_att_concepts)
-        all_sac.extend(comple_single_att_concepts)
-        for sac in all_sac:
-            if sac[0]:
-                X = set(sac[0])
-                Y = set()
-                Z = set()
-                for i in single_att_concepts:
-                    if i[0] and set(i[0]).issubset(X):
-                        Y.add(i[1])
-                for j in comple_single_att_concepts:
-                    if j[0] and set(j[0]).issubset(X):
-                        Z.add(j[1])
-                base_OEOs.append([X, [Y, Z]])
-        return base_OEOs
+    def get_support_counts(single_att_concepts):
+        # 单属性概念的外延大小即支持计数；空外延保留为 0。
+        return {attribute: len(extent)
+                for extent, attribute in single_att_concepts}
 
     def fit(self, X, y):
         X, y = check_X_y(X, y)
-        self.classes_ = np.unique(y)
+        # 每次训练重新初始化，避免保留上一次训练的规则和类别计数。
+        self.RuleSet_ = {}
+        self.class_count_ = {}
+        self.n_samples_fit_ = len(X)  # 支持比例的分母 |G|。
         ## construct the formal decision context (G, M, I, N, J)
         # the formal condition attribute context (G, M ,I)
         K1 = formal_context(data_set(X.tolist()), 1)
         # the complement context of K1=(G, M, I)
         K1_c= formal_context(data_set((1-X).tolist()), 1)
-        #print(np.linalg.matrix_rank(X_test))
         #the formal decision attribute context (G, N, J)
-        binary_y=pd.get_dummies(y, dtype='int8').to_numpy()
+        decision_df = pd.get_dummies(y, dtype='int8')
+        # 决策背景第 n 列、规则键 n 均对应原始类别标签 classes_[n]。
+        self.classes_ = decision_df.columns.to_numpy()
+        binary_y = decision_df.to_numpy()
         K2 = formal_context(data_set(binary_y.tolist()),1)
-        # the complement context of K1=(G, N, J)
+        # the complement context of K2=(G, N, J)
         K2_c= formal_context(data_set((1-binary_y).tolist()), 1)
         #
         single_att_concepts = self.get_single_att_concepts(K1)  # 正背景下的单属性概念
         comple_singel_att_concepts = self.get_single_att_concepts(K1_c)  # 负背景下的单属性概念
+        # 保存正、负文字项的支持计数；由预测策略决定如何使用。
+        self.support_pos_ = self.get_support_counts(single_att_concepts)
+        self.support_neg_ = self.get_support_counts(comple_singel_att_concepts)
         base_OEOs = self.get_base_OEOs(single_att_concepts, comple_singel_att_concepts)
-        # initialize Rule set
-        #R_A1=[]; R_A2=[]; R_B1=[];R_B2=[]
-        # the form of a rule is [set, target]. the set consisted of necessary attributes.
-        Max_C=dict(); RuleSet=dict()
+        # 合并基本概念，获取类与非类最大概念。
+        Max_C = dict()
         for n in range(0,K2.att_num):
             #（W, U, V)
             [W,U,V]=[set(),set(),set()]
             [P,Q,R]=[set(),set(),set()]
             n_class_Objs=K2.att2obj({n})
+            self.class_count_[n] = len(n_class_Objs)  # 用于预测时比较训练类别比例。
             non_class_Objs=K2_c.att2obj({n})
             for [extent, [intent, minus]] in base_OEOs:
+                intent, minus = set(intent), set(minus)
                 if extent.issubset(n_class_Objs):
                     [W,U,V]=[W|extent,U|intent,V|minus]
                 if extent.issubset(non_class_Objs):
                     [P,Q,R] = [P | extent, Q | intent, R | minus]
             Max_C[n]= {n: [[W,U,V], [P,Q,R]]}
-            #  save these ruls
+            # 按 A1、A2、B1、B2 保存前件；后件由类别 n 和规则类型确定。
             self.RuleSet_.update({ n : [U, V, Q, R]})
         return self
 
     def predict(self, X):
-        # 预测逻辑
-        # X: 待预测的特征数据，形状为 (n_samples, n_features)
-        # 返回值: 预测结果，形状为 (n_samples,)
+        """Predict original class labels; None denotes deferred classification.
 
-        # 1. 检查模型是否已训练（是否存在拟合后的属性）
-        predict_labels_list=list()
-        if self.RuleSet_ is None:
-            raise NotFittedError(
-                "This model has not been fitted yet. Call 'fit' with appropriate arguments before using this estimator.")
-        check_is_fitted(self, ['classes_'])
+        Uses all four rule types and self.voting. Legacy rule_type,
+        threshold and normalize_confidence do not control this procedure.
+        """
+        check_is_fitted(self, ['classes_', 'RuleSet_', 'support_pos_',
+                              'support_neg_', 'class_count_', 'n_samples_fit_'])
         X = check_array(X)
-        for test_obj in X:
-            predict_label = self.predictWithRules(self.RuleSet_,test_obj,self.rule_type)
-            predict_labels_list.append(predict_label)
-        return np.array(predict_labels_list, dtype=self.classes_.dtype)
-
-    def getClassificationRules(concepts, label2objs, att_num):
-        # 初始化 分类规则
-        class_rules = {}
-        veto_rules = {}  # 负规则集合，用于否决分类
-        # class_rules_2 = {}
-        # veto_rules_2 = {}  # 负规则集合，用于否决分类
-        for label in label2objs.keys():
-            class_rules[label] = [0, 0]  # 空集的hash就是0,这里的0代表正属性的hash
-            veto_rules[label] = [0, 0]  # 空集的hash就是0,这里的0代表负属性的hash
-            # class_rules_2[label] = 0
-            # veto_rules_2[label] = 0
-        modus_ne_cnt = 0
-        one_type_concept_cnt = 0
-        for concept in concepts:
-            if len(concept['modus']) > 0:
-                modus_ne_cnt = modus_ne_cnt + 1
-            for label, objs in label2objs.items():
-                # intersection_length = objs.intersection_length(concept['extent'])
-                if len(concept['extent']) > 0 and objs.is_supset(concept['extent']):  # 先判断是否为空集,类极大概念
-                    # print("概念的外延大小：", len(concept['extent']))
-                    # now_pro_rate = 1 / len(concept['intent'])
-                    one_type_concept_cnt = one_type_concept_cnt + 1
-                    now_rule = set2hash(concept['intent'])
-                    extent_hash, intent_hash = class_rules[label]
-                    # if extent_hash != 0 and intent_hash != 0:
-                    #     extent = hash2set(extent_hash)
-                    #     print(extent[0], '--->', label)
-                    class_rules[label] = [extent_hash | set2hash(concept['extent']), now_rule | intent_hash]
-                if len(concept['extent']) > 0 and objs.intersection_length(
-                        concept['extent']) == 0:  # 如果存在负规则，就从非类极大概念中取
-                    veto_rule = set2hash(concept['modus'])
-                    extent_hash, modus_hash = veto_rules[label]
-                    veto_rules[label] = [extent_hash | set2hash(concept['extent']), veto_rule | modus_hash]
-                # if objs.intersection_length(concept['extent']) == 0:
-                #     veto_rule = att2hash(concept['modus'])
-                #     veto_rules[label].append(veto_rule)
-        # print(class_rules)
-        # print(len(concepts), modus_ne_cnt, one_type_concept_cnt)
-        return class_rules, veto_rules
+        # object 类型保留原始标签和 None，避免将 defer 转为字符串或数值。
+        return np.array([
+            self.predictWithRules_2(self.RuleSet_, sample, voting=self.voting)
+            for sample in X
+        ], dtype=object)
 
     def get_positive_columns(self, row_data):
         positive_columns = set()
@@ -177,88 +110,57 @@ class RC_3Woc(BaseEstimator, ClassifierMixin):
                 positive_columns.add(idx)
         return positive_columns
 
-    @staticmethod
-    def _normalized_support(supports, rule_size):
-        if rule_size == 0:
-            return 0
-        return supports / rule_size
 
-    def predictWithRules(self, class_rules, test_sample, rule_type=3):# rule_type: 1,positive; 2,negative; 3, all
-        positive_label = dict()
-        negative_label = dict()
-        test_feature = self.get_positive_columns(test_sample)
-        for class_label in class_rules.keys():
-            positive_label[class_label] = 0
-            negative_label[class_label] = 0
-            [R_A1, R_A2, R_B1, R_B2] = class_rules[class_label]
-            if rule_type & 1 >0:
-                 # positive rule
-                supports =len(R_A1 & test_feature)
-                if  supports>0:  # 测试样本中满足正规则中的部分条件属性
-                    positive_label[class_label]= supports
-            if rule_type & 2 >0:
-                supports = len(R_A2 & test_feature)
-                if supports> 0:  # 测试样本中满足负规则中的部分条件属性
-                    negative_label[class_label]=supports + negative_label[class_label]
-                supports = len(R_B1 & test_feature)
-                if supports>0:  # 测试样本中满足负规则中的部分条件属性
-                    negative_label[class_label]= supports+ negative_label[class_label]
-                supports = len(R_B2)-len(R_B2 & test_feature)
-                if supports>0:  # 测试样本中满足负规则中的部分条件属性
-                    negative_label[class_label]=supports +negative_label[class_label]
-        #analysis classified answer
-        vote_label = dict()
-        for n_class in class_rules.keys():
-            vote_label[n_class] = positive_label[n_class]-negative_label[n_class]
-        ans_label = max(vote_label, key=lambda k: vote_label[k])
-        return ans_label
-    def predictWithRules_1(self, class_rules, test_sample, rule_type=3):# rule_type: 1,positive; 2,negative; 3, all
-        positive_label = dict()
-        negative_label = dict()
-        test_feature = self.get_positive_columns(test_sample)
-        for class_label in class_rules.keys():
-            positive_label[class_label] = 0
-            negative_label[class_label] = 0
-            [R_A1, R_A2, R_B1, R_B2] = class_rules[class_label]
-            if rule_type & 1 >0:
-                 # positive rule
-                supports =len(R_A1 & test_feature)
-                if  supports>0:  # 测试样本中满足正规则中的部分条件属性
-                    if self.normalize_confidence:
-                        positive_label[class_label] = self._normalized_support(supports, len(R_A1))
-                    else:
-                        positive_label[class_label]= supports
-            if rule_type & 2 >0:
-                supports = len(R_A2 & test_feature)
-                if supports> 0:  # 测试样本中满足负规则中的部分条件属性
-                    if self.normalize_confidence:
-                        negative_label[class_label] = (
-                            self._normalized_support(supports, len(R_A2)) + negative_label[class_label]
-                        )
-                    else:
-                        negative_label[class_label]=supports + negative_label[class_label]
-                supports = len(R_B1 & test_feature)
-                if supports>0:  # 测试样本中满足负规则中的部分条件属性
-                    if self.normalize_confidence:
-                        negative_label[class_label] = (
-                            self._normalized_support(supports, len(R_B1)) + negative_label[class_label]
-                        )
-                    else:
-                        negative_label[class_label]= supports+ negative_label[class_label]
-                supports = len(R_B2)-len(R_B2 & test_feature)
-                if supports>0:  # 测试样本中满足负规则中的部分条件属性
-                    if self.normalize_confidence:
-                        negative_label[class_label] = (
-                            self._normalized_support(supports, len(R_B2)) + negative_label[class_label]
-                        )
-                    else:
-                        negative_label[class_label]=supports +negative_label[class_label]
-        #analysis classified answer
-        vote_label = dict()
-        for n_class in class_rules.keys():
-            vote_label[n_class] = positive_label[n_class]-negative_label[n_class]
-        ans_label = max(vote_label, key=lambda k: vote_label[k])
-        return ans_label
+    def predictWithRules_2(self, class_rules, test_sample, voting="uniform"):
+        """Return the original class label, or None for defer.
+
+        voting: "uniform", "nonzero", or "support".
+        class_rules uses internal class indices and [U, V, Q, R] antecedents.
+        This method always uses all four rule types.
+        """
+        check_is_fitted(self, ['classes_', 'support_pos_', 'support_neg_',
+                              'class_count_', 'n_samples_fit_'])
+        if voting not in ("uniform", "nonzero", "support"):
+            raise ValueError("voting must be 'uniform', 'nonzero', or 'support'.")
+        sample = np.asarray(test_sample)
+        if sample.ndim != 1 or len(sample) != len(self.support_pos_):
+            raise ValueError("test_sample must be one row with the training feature count.")
+        if not np.all((sample == 0) | (sample == 1)):
+            raise ValueError("test_sample must contain only binary values (0 or 1).")
+        if set(class_rules) != set(range(len(self.classes_))):
+            raise ValueError("class_rules must contain every internal class index.")
+        present = self.get_positive_columns(sample)
+
+        def weight(support):
+            if voting == "uniform":
+                return 1
+            if voting == "nonzero":
+                return int(support > 0)
+            # 所有权重共享分母 |G|，先比较整数分子，避免浮点误差影响并列判断。
+            return int(support)
+
+        scores = {}
+        total_contribution = 0
+        for n, (U, V, Q, R) in class_rules.items():
+            # A1 属性存在、A2 属性缺失时提供支持证据。
+            supporting = (sum(weight(self.support_pos_[a]) for a in U & present)
+                          + sum(weight(self.support_neg_[b]) for b in V - present))
+            # B1 属性存在、B2 属性缺失时提供排除证据。
+            excluding = (sum(weight(self.support_pos_[c]) for c in Q & present)
+                         + sum(weight(self.support_neg_[d]) for d in R - present))
+            scores[n] = supporting - excluding
+            total_contribution += supporting + excluding
+
+        # H=0 表示无有效证据；分数抵消为零或最高分为负并不等于 H=0。
+        if total_contribution == 0:
+            return None
+        best_score = max(scores.values())
+        candidates = [n for n, score in scores.items() if score == best_score]
+        # 类别比例共享分母 |G|，比较训练类别计数即可。
+        largest_count = max(self.class_count_[n] for n in candidates)
+        selected = [n for n in candidates if self.class_count_[n] == largest_count]
+        return self.classes_[selected[0]] if len(selected) == 1 else None
+
     def get_rules_num(self):
         count=0
         for key in self.RuleSet_.keys():
