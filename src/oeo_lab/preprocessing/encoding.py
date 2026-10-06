@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 """LeakFreeContextEncoder —— 无泄漏的"离散化 + 二值化"编码器。
 
-分箱逻辑(GreedyFindBin/FindBinWithZeroAsOneBin/GetBins/GetCodes)原样取自原
-Features2Context, 保证与论文方法学完全一致, 仅重组为 sklearn 的 fit/transform:
+候选分箱逻辑(GreedyFindBin/FindBinWithZeroAsOneBin/GetBins)取自原
+Features2Context, 复用历史候选边界逻辑, 仅重组为 sklearn 的 fit/transform:
     fit(X_train)        切分点 + one-hot 列集合 仅由训练集决定
     transform(X)        用训练集参数处理任意数据, 并对齐到训练列
-防泄漏: 测试折 unseen 值落最近箱(bins 末位为 Inf), 未见列经 reindex 补 0,
+防泄漏: 测试折 unseen 值落最近箱(bins 末位为 Inf), 空候选区间在训练时合并，每个特征恰好激活一个区间属性,
         测试集绝不参与条件属性集 M 的构造。
 """
 import numpy as np
@@ -137,21 +137,8 @@ class LeakFreeContextEncoder(BaseEstimator, TransformerMixin):
         return bins
 
     def _GetCodes(self, df, col, bins):
-        def _find(x, arr):
-            if x <= arr[0]:
-                return 0
-            left, right = 0, len(arr) - 1
-            while True:
-                mid = (left + right) // 2
-                if x <= arr[mid] and x <= arr[mid - 1]:
-                    right = mid - 1
-                elif x <= arr[mid] and x > arr[mid - 1]:
-                    return mid
-                elif x > arr[mid] and x <= arr[mid + 1]:
-                    return mid + 1
-                else:
-                    left = mid + 1
-        return [_find(x, bins[col]) for x in df[col]]
+        # 左闭判定由 side=left 实现：x 等于上界时仍属于当前箱。
+        return np.searchsorted(bins[col], df[col].to_numpy(), side='left').tolist()
     # --------------------------------------------------------------------
 
     def _encode(self, X_df):
@@ -163,6 +150,14 @@ class LeakFreeContextEncoder(BaseEstimator, TransformerMixin):
         if self.col_names is None:
             self.col_names = list(X_df.columns)
         self.bins_ = self._GetBins(X_df, self.col_names, self.max_bin, self.min_data_in_bin)
+        # 2026-10-06：修复未见取值落入空候选箱后被 reindex 丢弃、整组全零的问题。
+        # 预留零区间可能无训练对象。移除这些空区间并重新编号，
+        # 保留有训练支持的箱边界；首、末箱覆盖训练范围外取值。
+        for col in self.col_names:
+            used = sorted(set(self._GetCodes(X_df, col, self.bins_)))
+            bounds = [self.bins_[col][i] for i in used]
+            bounds[-1] = float('inf')
+            self.bins_[col] = bounds
         self.columns_ = list(self._encode(X_df).columns)   # 锁定训练折决定的条件属性集 M
         return self
 

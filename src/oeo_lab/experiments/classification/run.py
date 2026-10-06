@@ -47,6 +47,8 @@ def parse_args():
 
 
 def main():
+    # 2026-10-06：旧流程不对应当前投票及 defer 评估，防止误启动。
+    raise SystemExit('Legacy entry retired: use bitcoin_experiment or uci_experiment; see docs/classification/reproduction.md')
     args = parse_args()
     from .runner import run_all_experiments_parallel
     config.INCLUDE_RAW_BASELINES = config.INCLUDE_RAW_BASELINES and not args.no_raw      # models.build_models 默认 include_raw=True

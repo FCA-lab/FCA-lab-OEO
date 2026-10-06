@@ -44,6 +44,11 @@ class RC_3Woc(ClassifierMixin, BaseEstimator, NewThreeWayForObj):
 
     def fit(self, X, y):
         X, y = check_X_y(X, y)
+        # 2026-10-06：补背景使用 1-X，故训练输入必须是二值；布尔值先转整数。
+        if not np.all((X == 0) | (X == 1)):
+            raise ValueError("Training input must contain only binary values (0 or 1).")
+        X = X.astype(np.int8, copy=False)
+        self.n_features_in_ = X.shape[1]
         # 每次训练重新初始化，避免保留上一次训练的规则和类别计数。
         self.RuleSet_ = {}
         self.class_count_ = {}

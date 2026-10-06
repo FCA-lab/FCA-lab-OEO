@@ -314,15 +314,28 @@ def classification_worker(task):
         raise
 
 
+# 2026-10-06：避免全量 Bitcoin 规则记录超过 Excel 单表行数而导出失败。
+def write_rule_sheets(writer, records, rows_per_sheet=1_000_000):
+    """按行数拆分逐规则表，避免超过 Excel 单表上限；检查点仍保留全量。"""
+    if not 1 <= rows_per_sheet <= 1_048_575:
+        raise ValueError('Invalid Excel data row limit')
+    for start in range(0, max(1,len(records)), rows_per_sheet):
+        suffix = '' if start == 0 else '_' + str(start//rows_per_sheet+1)
+        pd.DataFrame(records[start:start+rows_per_sheet]).to_excel(
+            writer, sheet_name='rules'+suffix, index=False)
+
+
 def summarize_classification(tasks, directory, output, template):
     """汇总折结果；先按种子合并 OOF 计数，再对不同种子的指标求均值/标准差。"""
     import json
     from pathlib import Path
+    from ..common.checkpoints import same_task
     folds, states, rules = [], [], []
     for task in tasks:
         path = directory/template.format(task_id=task['id'])
         saved = json.loads(path.read_text()) if path.exists() else {}
-        if saved.get('task') != task: saved = {}
+        # 与恢复检查一致：仅调度参数不同的历史成功任务仍可汇总。
+        if not same_task(saved.get('task'), task): saved = {}
         base = {'task_id':task['id'], 'dataset':task['name'], 'model':task['model_name'],
                 'max_bins':task['max_bins'], 'seed':task['split']['seed'], 'fold':task['split']['fold']}
         if 'protocol' in task:
@@ -393,7 +406,7 @@ def summarize_classification(tasks, directory, output, template):
         seed_frame.to_excel(writer,sheet_name='per_seed',index=False)
         pd.DataFrame(summaries).to_excel(writer,sheet_name='summary',index=False)
         pd.DataFrame(states).to_excel(writer,sheet_name='tasks',index=False)
-        pd.DataFrame(rules).to_excel(writer,sheet_name='rules',index=False)
+        write_rule_sheets(writer, rules)
     os.replace(tmp,output)
     return all(s['status']=='ok' for s in states)
 

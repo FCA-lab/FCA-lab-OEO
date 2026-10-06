@@ -15,7 +15,8 @@ from threadpoolctl import threadpool_limits
 from . import completeness_config as config
 from ..common.provenance import collect_provenance
 from oeo_lab.preprocessing.encoding import LeakFreeContextEncoder
-from ..common.checkpoints import digest, save, completed
+# 2026-10-06：任务生成与恢复/汇总采用一致的身份比较，排除调度参数。
+from ..common.checkpoints import task_id, same_task, digest, save, completed
 from ..common.runner import run_tasks
 from fca_core.context import formal_context
 from fca_core.data_source import data_set
@@ -39,6 +40,7 @@ def load_dataset(spec):
     features = frame.drop(columns=[decision] + spec['id_columns'])
     # 完备性实验使用整个数据集构造背景；预测实验须在训练折内拟合。
     X, metadata = preprocess_features(features, spec)
+    metadata['n_features_raw'] = int(features.shape[1])  # 已排除决策列和 ID 列。
     return X, y, metadata
 
 
@@ -166,6 +168,8 @@ def compare_context(X, y):
                        for x, (a, b) in builder.base_OEOs})
     missing, extra = reference - direct, direct - reference
     row = dict(objects=len(X), attributes=X.shape[1], classes=len(model.classes_),
+               n_objects=int(X.shape[0]), n_attributes=int(X.shape[1]),
+               density=float(np.count_nonzero(X) / X.size) if X.size else None,
                context_sha256=digest({'X': X.tolist(), 'y': y.tolist()}),
                direct_seconds=direct_seconds, construction_seconds=construction_seconds,
                full_extraction_seconds=extraction_seconds,
@@ -193,6 +197,7 @@ def execute(task):
     """单个工作进程入口：预处理不计入规则提取时间。"""
     X, y, names = load_dataset(task['dataset'])
     result = compare_context(X, y)
+    result['metrics']['n_features_raw'] = names['n_features_raw']
     result['attributes'] = names
     return result
 
@@ -203,7 +208,7 @@ def summarize(tasks, directory, output):
     for task in tasks:
         path = directory / config.OUTPUT['checkpoint_template'].format(task_id=task['id'])
         record = json.loads(path.read_text()) if path.exists() else {}
-        if record.get('task') != task:
+        if not same_task(record.get('task'), task):
             record = {}
         row = {'task_id': task['id'], 'dataset': task['name'], 'max_bins': task['dataset'].get('max_bins'),
                'repeat': task.get('repeat', 0), 'status': record.get('status', 'pending'), 'error': record.get('error')}
@@ -229,7 +234,8 @@ def parse_args(argv=None):
     """解析并验证命令行；显式参数优先于独立配置。"""
     defaults = dict(config.EXECUTION, **config.COMPLETENESS['execution'])
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--datasets', nargs='+', default=config.COMPLETENESS['datasets'])
+    parser.add_argument('--datasets', nargs='+', choices=list(config.DATASETS),
+                        default=list(config.DATASETS), help='Default: all registered datasets')
     parser.add_argument('--results-root', type=Path, default=Path(config.OUTPUT['root']))
     parser.add_argument('--n-jobs', type=int, default=defaults['n_jobs'])
     parser.add_argument('--timeout', type=float, default=defaults['task_timeout_sec'])
@@ -237,6 +243,8 @@ def parse_args(argv=None):
                         help='Override numerical dataset bin grids; categorical datasets are unchanged')
     parser.add_argument('--dry-run', action='store_true')
     args = parser.parse_args(argv)
+    if not args.datasets:
+        parser.error('No datasets registered in DATASETS')
     if args.n_jobs < 1 or (args.timeout is not None and args.timeout <= 0):
         parser.error('n-jobs and timeout must be positive')
     if args.max_bins is not None and any(v < 3 for v in args.max_bins):
@@ -263,7 +271,9 @@ def build_tasks(args, provenance):
         spec['sha256'] = hashlib.sha256(Path(spec['path']).read_bytes()).hexdigest()
         grid = [None]
         if spec['feature_kind'] == 'numerical':
-            preprocessing = config.COMPLETENESS['preprocessing'][name]
+            # 公共默认值 → 数据集局部设置 → 命令行分箱覆盖。
+            preprocessing = dict(config.COMPLETENESS['preprocessing'])
+            preprocessing.update(spec.get('preprocessing', {}))
             grid = args.max_bins if args.max_bins is not None else preprocessing['max_bins']
             if not grid or any(not isinstance(v, int) or v < 3 for v in grid):
                 raise ValueError('Numerical completeness max_bins must be integers >= 3')
@@ -278,7 +288,7 @@ def build_tasks(args, provenance):
                     variant['max_bins'] = bins
                 task = {'experiment': 'rule_completeness', 'name': name, 'dataset': variant,
                         'repeat': repeat, 'provenance': provenance}
-                task['id'] = digest(task)[:24]
+                task['id'] = task_id(task)
                 tasks.append(task)
     return tasks
 
@@ -323,12 +333,10 @@ def main(argv=None):
 
 if __name__ == '__main__':
     # 本次实验的运行参数：在此修改即可；未列出的选项仍读取配置文件。
+    max_bins = [5, 10, 20]
     experiment_args = [
-        '--datasets', 'balloons', 'lenses', 'iris', 'wine', 'wdbc',
-        '--max-bins', '10',       # 可写多个值，例如 '3', '5', '10'；仅影响数值数据集。
-        '--n-jobs', '20',         # 同时运行的实验任务数；算法内部仍为单线程。
-        # '--results-root', '/path/to/results',  # 不填写则使用配置中的输出目录。
-        # '--dry-run',           # 取消注释后只查看任务，不执行实验。
+    '--max-bins', *map(str, max_bins),
+    '--n-jobs', '20',
     ]
-    # 终端显式提供参数时，整组使用终端参数；否则使用上面的脚本参数。
-    main(sys.argv[1:] if len(sys.argv) > 1 else experiment_args)
+    # 先读取脚本设置，终端仅覆盖显式提供的同名参数。
+    main(experiment_args + sys.argv[1:])

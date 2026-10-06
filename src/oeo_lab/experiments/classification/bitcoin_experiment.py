@@ -10,7 +10,8 @@ from .splits import make_splits
 from .baselines import create_model
 from .runner import run_classification_tasks
 from ..common.provenance import collect_provenance
-from ..common.checkpoints import digest
+# 2026-10-06：任务 ID 排除调度参数，调整并行数可继续复用成功任务。
+from ..common.checkpoints import task_id
 
 
 def parse_args(argv=None):
@@ -73,7 +74,7 @@ def build_tasks(args, provenance):
                               'inventory':plan['inventory'],'model_name':model_name,'model':model,
                               'max_bins':b,'min_data_in_bin':config.MIN_DATA_IN_BIN,
                               'voting':config.VOTING,'provenance':provenance}
-                        task['id']=digest(task)[:24];tasks.append(task)
+                        task['id']=task_id(task);tasks.append(task)
     return tasks
 
 

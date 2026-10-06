@@ -4,24 +4,20 @@ from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[4]
 RESULTS_ROOT = str(PROJECT_ROOT / 'results' / 'classification')
+# 增删数据集只修改 DATASETS；默认运行其中所有条目。
 # 列索引从 0 开始；决策列和 ID 列不进入条件背景。
+# 数值数据集可在条目内添加 preprocessing 覆盖公共预处理默认值。
 DATASETS = {
     "balloons": {"path": "raw/uci/balloons/adult+stretch.data", "format": "csv",
                  "decision_column": 4, "id_columns": [], "feature_kind": "categorical"},
     "lenses": {"path": "raw/uci/lenses/lenses.data", "format": "whitespace",
                "decision_column": 5, "id_columns": [0], "feature_kind": "categorical"},
     "iris": {"path": "raw/uci/iris/iris.data", "format": "csv",
-             "decision_column": 4, "id_columns": [], "feature_kind": "numerical"},
-    "wine": {"path": "raw/uci/wine/wine.data", "format": "csv",
-             "decision_column": 0, "id_columns": [], "feature_kind": "numerical"},
-    "wdbc": {"path": "raw/uci/wdbc/wdbc.data", "format": "csv",
-             "decision_column": 1, "id_columns": [0], "feature_kind": "numerical"},
+             "decision_column": 4, "id_columns": [], "feature_kind": "numerical"}
 }
 
 COMPLETENESS = {
-    "datasets": ["balloons", "lenses", "iris", "wine", "wdbc"],
-    "preprocessing": {name: {"max_bins": [3], "min_data_in_bin": 3}
-                      for name in ("iris", "wine", "wdbc")},
+    "preprocessing": {"max_bins": [3], "min_data_in_bin": 3},
     "repeats": 1,
     "execution": {"n_jobs": 1, "task_timeout_sec": None},
     "routes": ["direct", "full_lattice"],
