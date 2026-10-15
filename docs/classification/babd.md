@@ -39,3 +39,17 @@ PYTHONPATH=src python -m oeo_lab.experiments.classification.babd_experiment --ex
 
 第二条会实际训练；当前仅验证小型夹具及真实数据任务矩阵，不代表正式实验完成。
 TabPFN和Elliptic独立入口仍待分别核对基准版本、数据协议后实现。
+
+## 2026-10-15 模型接口修复与恢复审核
+
+- CatBoost多分类predict可返回(n,1)列。公共评价在模型输出处仅压掉单列维度，仍拒绝多列概率矩阵或长度错误。
+- LightGBM训练/预测显式使用相同feature_i列名和顺序；未改变二值特征值。
+- 工作进程捕获任务异常后保存failed并以1退出，控制台同时显示检查点status及退出码。
+- 日志增加train预算，不再把BABD的所有预算误显示成只有fraction=1.0。
+- 22项相关测试通过，含实际CatBoost和LightGBM；LightGBM数组/具名输入的标签和概率等价检查通过。
+- 中断时840项：99成功、15失败、726未完成。一次性兼容审核核对原任务、环境、包版本和源码指纹，
+  仅允许本次评价接口/日志修复，迁移99个成功结果为新ID检查点副本；原文件不改。
+  新文件reuse_audit保留原任务、原检查点哈希及复制理由，耗时为原测量，未冒充重新运行。
+  审核索引：results/classification/checkpoints/babd_adapter_reuse_audit.json。
+- 使用相同数据、网格、模型和环境恢复时，99项可复用；失败和未完成共741项重跑。
+  再修改源码/环境/实验参数仍可能使检查点失效，不全局放宽缓存校验。

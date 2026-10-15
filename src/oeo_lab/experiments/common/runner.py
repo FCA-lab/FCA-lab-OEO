@@ -1,4 +1,5 @@
 """One process per task; bounded concurrency and recoverable checkpoints."""
+import json
 import multiprocessing as mp
 import time
 import traceback
@@ -11,6 +12,7 @@ def _execute(worker, task, path):
         save(path, {"task": task, "status": "ok", "result": result})
     except Exception:
         save(path, {"task": task, "status": "failed", "error": traceback.format_exc()})
+        raise SystemExit(1)
 
 def available_gb():
     try:
@@ -44,7 +46,8 @@ def run_tasks(tasks, worker, directory, settings, template="{task_id}.json"):
                     if not Path(path).exists():
                         save(path, {"task": task, "status": "failed", "error": f"exit code {process.exitcode}"})
                     active.remove(item)
-                    print(f"Finished {task['id']} (exit={process.exitcode})", flush=True)
+                    status = json.loads(Path(path).read_text()).get("status", "unknown")
+                    print(f"Finished {task['id']} (status={status}, exit={process.exitcode})", flush=True)
             free = available_gb()
             memory_ok = free is None or free >= settings["min_free_gb"]
             if pending and len(active) < settings["n_jobs"] and memory_ok:

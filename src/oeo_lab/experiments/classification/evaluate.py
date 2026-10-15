@@ -331,7 +331,10 @@ def evaluate_fold(task):
     """一个任务=一个折×一个模型×一个输入设置；OEO 一次 fit 服务三种策略。"""
     from .datasets import load_numeric_dataset
     from .baselines import create_model
-    if task['dataset'].get('kind') == 'bitcoin':
+    if task['dataset'].get('kind') == 'elliptic':
+        from .elliptic_experiment import load_elliptic_dataset
+        X,y,labels,_,_ = load_elliptic_dataset(task['dataset'])
+    elif task['dataset'].get('kind') == 'bitcoin':
         from .bitcoin_data import load_bitcoin_dataset
         X,y,labels,_ = load_bitcoin_dataset(task['dataset'])
     else:
@@ -352,6 +355,11 @@ def evaluate_fold(task):
         X_train, X_test = X_train.to_numpy(), X_test.to_numpy()
         preprocessing_fit_seconds = preprocessing_test_seconds = 0.0
     model = create_model(task['model'], task['split']['seed'])
+    # LightGBM自动生成列名；显式保留相同列名与顺序，避免预测接口警告。
+    if task['model']['estimator'] == 'lightgbm':
+        columns = [f'feature_{i}' for i in range(X_train.shape[1])]
+        X_train = pd.DataFrame(X_train, columns=columns)
+        X_test = pd.DataFrame(X_test, columns=columns)
     start = time.perf_counter()
     model.fit(X_train,y_train)
     fit_seconds = time.perf_counter() - start
@@ -368,14 +376,32 @@ def evaluate_fold(task):
             model.voting = voting
             model.rule_types = tuple(variant.get('rule_types', ('A1','A2','B1','B2')))
         start = time.perf_counter()
-        if is_oeo:
+        ranking = None
+        if is_oeo and 'positive_label' in task:
+            # 同一次规则计分产生预测及排序分数，包含在决策耗时中。
+            details = [model.predictWithRules(model.RuleSet_, sample, return_details=True) for sample in X_test]
+            prediction = np.array([d['prediction'] for d in details], dtype=object)
+            candidates = [d['candidates'] for d in details]
+            pos = list(model.classes_).index(task['positive_label'])
+            ranking = np.array([d['scores'][pos]-d['scores'][1-pos] for d in details])
+        elif is_oeo:
             prediction, candidates = model.predict(X_test, return_candidates=True)
         else:
-            prediction = model.predict(X_test)
+            prediction = normalize_class_predictions(model.predict(X_test), len(y_test))
             candidates = [(label,) for label in prediction]
+        if not is_oeo and 'positive_label' in task:
+            pos = list(model.classes_).index(task['positive_label'])
+            if hasattr(model, 'predict_proba'):
+                ranking = model.predict_proba(X_test)[:, pos]
+            elif hasattr(model, 'decision_function'):
+                ranking = model.decision_function(X_test) * (1 if pos == 1 else -1)
+            else:
+                raise ValueError('Binary evaluation requires continuous ranking scores')
         predict_seconds = time.perf_counter() - start
         scores = evaluate_predictions(y_test, prediction, list(range(len(labels))))
         scores.update(evaluate_candidates(y_test, candidates, len(labels)))
+        if 'positive_label' in task:
+            scores.update(evaluate_illicit(y_test, prediction, ranking, task['positive_label']))
         empty,ties = _defer_reasons(model,X_test,prediction,voting) if is_oeo else (0,0)
         assert empty+ties == scores['n_deferred']
         if not np.isfinite(scores['classified_accuracy']): scores['classified_accuracy'] = None
@@ -420,3 +446,29 @@ def evaluate_candidates(y_true, candidates, n_classes):
             'candidate_hit_rate':float(hits.mean()), 'mean_candidate_size':float(sizes.mean()),
             'partial_reduction_rate':count/len(y_true),
             'partial_hit_rate':int((hits & partial).sum())/count if count else None}
+
+
+def evaluate_illicit(y_true, prediction, ranking, positive_label=1):
+    """非法类FN包括延迟决策；AP为阶梯积分，不冒称梯形PR曲线面积。"""
+    from sklearn.metrics import average_precision_score
+    truth=np.asarray(y_true)==positive_label
+    predicted=np.asarray(prediction,dtype=object)==positive_label
+    ranking=np.asarray(ranking,dtype=float)
+    if ranking.shape!=truth.shape or not np.isfinite(ranking).all():
+        raise ValueError('Invalid illicit ranking scores')
+    tp=int(np.sum(truth & predicted));fp=int(np.sum(~truth & predicted));fn=int(np.sum(truth & ~predicted))
+    return dict(illicit_tp=tp,illicit_fp=fp,illicit_fn=fn,
+        illicit_precision=tp/(tp+fp) if tp+fp else 0.0,
+        illicit_recall=tp/(tp+fn) if tp+fn else None,
+        illicit_f1=2*tp/(2*tp+fp+fn) if 2*tp+fp+fn else 0.0,
+        illicit_average_precision=float(average_precision_score(truth,ranking)) if truth.any() else None)
+
+
+def normalize_class_predictions(prediction, n_samples):
+    """CatBoost可返回(n,1)类别列；仅压掉这一维，不扁平化概率矩阵。"""
+    values = np.asarray(prediction)
+    if values.ndim == 2 and values.shape[1] == 1:
+        values = values[:, 0]
+    if values.ndim != 1 or len(values) != n_samples:
+        raise ValueError('Expected one class label per test sample')
+    return values

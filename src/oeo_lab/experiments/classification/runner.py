@@ -300,7 +300,7 @@ def classification_worker(task):
     """工作进程入口；控制台即时显示数据集、模型、分箱和折号。"""
     from .evaluate import evaluate_fold
     from threadpoolctl import threadpool_limits
-    label = (f"{task['name']} | {task.get('protocol','stratified')} | {task['model_name']} | fraction={task.get('fraction',1.0)} | bins={task['max_bins']} | "
+    label = (f"{task['name']} | {task.get('protocol','stratified')} | {task['model_name']} | train={task.get('train_budget',len(task['split']['train_indices']))} | fraction={task.get('fraction','n/a')} | bins={task['max_bins']} | "
              f"seed={task['split']['seed']} fold={task['split']['fold']}")
     print(f'[开始] {label} | PID={os.getpid()}', flush=True)
     started = time.perf_counter()
@@ -345,6 +345,8 @@ def summarize_classification(tasks, directory, output, template):
         # 独立样本预算必须进入记录及聚合键，不能混合不同训练规模。
         if 'train_budget' in task:
             base.update(train_budget=task['train_budget'], train_per_class=task['train_per_class'])
+        for key in ('feature_set','train_end','test_start','test_end'):
+            if key in task:base[key]=task[key]
         status = saved.get('status','pending')
         states.append({**base,'status':status,'error':saved.get('error')})
         variants = task['voting'] if task['model']['estimator']=='oeo' else ['baseline']
@@ -374,6 +376,8 @@ def summarize_classification(tasks, directory, output, template):
         keys.insert(2, 'fraction')  # 各比例独立聚合固定测试折的 OOF 结果。
     if 'train_budget' in frame:
         keys = ['train_budget','train_per_class'] + keys
+    for field in ('feature_set','train_end','test_start','test_end'):
+        if field in frame:keys.insert(0,field)
     for group_key, group in frame.groupby(keys,dropna=False,sort=False):
         row = dict(zip(keys,group_key))
         row.update(expected_folds=len(group), completed_folds=int(group.status.eq('ok').sum()))
@@ -404,6 +408,14 @@ def summarize_classification(tasks, directory, output, template):
             for k in ['fit_seconds','train_seconds','predict_seconds','preprocessing_fit_seconds','preprocessing_test_seconds',
                       'defer_no_evidence','defer_tie']:
                 row[k]=float(group[k].sum())
+            if 'illicit_tp' in group:
+                tp,fp,fn = (int(group[k].sum()) for k in ('illicit_tp','illicit_fp','illicit_fn'))
+                row.update(illicit_tp=tp,illicit_fp=fp,illicit_fn=fn,
+                    illicit_precision=tp/(tp+fp) if tp+fp else 0.0,
+                    illicit_recall=tp/(tp+fn) if tp+fn else None,
+                    illicit_f1=2*tp/(2*tp+fp+fn) if 2*tp+fp+fn else 0.0)
+                # 此入口每种子只有一个固定时间留出，不拼接不同模型的排序分数。
+                row['illicit_average_precision']=float(group.illicit_average_precision.mean())
             if group.rule_count.notna().any():
                 row['rule_count']=float(group.rule_count.mean())
         per_seed.append(row)
@@ -415,6 +427,7 @@ def summarize_classification(tasks, directory, output, template):
     metrics += ['macro_precision','macro_recall','candidate_hit_rate','mean_candidate_size',
                 'partial_reduction_rate','partial_hit_rate','active_rule_count',
                 'rules_A1','rules_A2','rules_B1','rules_B2','preprocessing_fit_seconds']
+    metrics += ['illicit_precision','illicit_recall','illicit_f1','illicit_average_precision']
     for key,g in seed_frame.groupby(keys[:-1],dropna=False,sort=False):
         row=dict(zip(keys[:-1],key));row.update(expected_seeds=len(g),completed_seeds=int(g.complete.sum()))
         row['complete']=bool(g.complete.all())
@@ -452,7 +465,7 @@ def run_classification_tasks(tasks, settings, output):
     for task in tasks:
         path=directory/template.format(task_id=task['id'])
         if settings.get('resume',True) and completed(path,task):
-            print(f"[复用] {task['name']} | {task.get('protocol','stratified')} | {task['model_name']} | fraction={task.get('fraction',1.0)} | bins={task['max_bins']} | seed={task['split']['seed']} fold={task['split']['fold']}",flush=True)
+            print(f"[复用] {task['name']} | {task.get('protocol','stratified')} | {task['model_name']} | train={task.get('train_budget',len(task['split']['train_indices']))} | fraction={task.get('fraction','n/a')} | bins={task['max_bins']} | seed={task['split']['seed']} fold={task['split']['fold']}",flush=True)
         elif path.exists():
             # 保留失败尝试，防止过期文件被当作重试后的成功记录。
             path.rename(path.with_name(path.stem+'.previous-'+str(time.time_ns())+'.json'))
