@@ -104,6 +104,8 @@ def evaluate_predictions(y_true, y_pred, labels):
         'classified_accuracy': correct / accepted if accepted else float('nan'),
         'overall_correct_rate': correct / total,
         'macro_f1': float(np.mean([row['f1'] for row in per_class])),
+        'macro_precision': float(np.mean([r['tp']/(r['tp']+r['fp']) if r['tp']+r['fp'] else 0.0 for r in per_class])),
+        'macro_recall': float(np.mean([r['tp']/(r['tp']+r['fn']) if r['tp']+r['fn'] else 0.0 for r in per_class])),
         'per_class': per_class,
     }
 
@@ -306,7 +308,7 @@ def _rule_audit(model, X_test, y_test):
 
 
 def _defer_reasons(model, X_test, predictions, voting):
-    """只诊断 defer 样本：无有效贡献，或经训练比例比较后仍并列。"""
+    """只诊断 defer 样本：无有效贡献，或有贡献但最高分并列。"""
     empty = ties = 0
     for sample, prediction in zip(X_test, predictions):
         if prediction is not None:
@@ -314,9 +316,10 @@ def _defer_reasons(model, X_test, predictions, voting):
         present = set(np.flatnonzero(sample))
         evidence = False
         for U,V,Q,R in model.RuleSet_.values():
-            for attributes, supports in ((U & present,model.support_pos_),
+            for kind, (attributes, supports) in zip(('A1','A2','B1','B2'), ((U & present,model.support_pos_),
                     (V-present,model.support_neg_), (Q & present,model.support_pos_),
-                    (R-present,model.support_neg_)):
+                    (R-present,model.support_neg_))):
+                if kind not in model.rule_types:continue
                 if any(voting == 'uniform' or supports[a] > 0 for a in attributes):
                     evidence = True
         if evidence: ties += 1
@@ -353,21 +356,41 @@ def evaluate_fold(task):
     model.fit(X_train,y_train)
     fit_seconds = time.perf_counter() - start
     is_oeo = task['model']['estimator']=='oeo'
-    variants = task['voting'] if is_oeo else [None]
+    # 先提取完整规则一次，后续投票/消融仅改变预测，不再次 fit。
+    rules = _rule_audit(model,X_test,y_test) if is_oeo else []
+    variants = task.get('prediction_variants')
+    if variants is None:  # 保留 Bitcoin 等现有入口。
+        variants = [{'voting':v} for v in (task['voting'] if is_oeo else ['baseline'])]
     results = []
-    for voting in variants:
-        if is_oeo: model.voting = voting
+    for variant in variants:
+        voting = variant['voting']
+        if is_oeo:
+            model.voting = voting
+            model.rule_types = tuple(variant.get('rule_types', ('A1','A2','B1','B2')))
         start = time.perf_counter()
-        prediction = model.predict(X_test)
+        if is_oeo:
+            prediction, candidates = model.predict(X_test, return_candidates=True)
+        else:
+            prediction = model.predict(X_test)
+            candidates = [(label,) for label in prediction]
         predict_seconds = time.perf_counter() - start
         scores = evaluate_predictions(y_test, prediction, list(range(len(labels))))
+        scores.update(evaluate_candidates(y_test, candidates, len(labels)))
         empty,ties = _defer_reasons(model,X_test,prediction,voting) if is_oeo else (0,0)
         assert empty+ties == scores['n_deferred']
-        # JSON 不使用非标准 NaN；未定义的条件准确率保存为 null，Excel 中为空。
         if not np.isfinite(scores['classified_accuracy']): scores['classified_accuracy'] = None
-        results.append({'voting':voting or 'baseline', **scores,
-            'predict_seconds':predict_seconds, 'defer_no_evidence':empty, 'defer_tie':ties})
-    rules = _rule_audit(model,X_test,y_test) if is_oeo else []
+        row = {'voting':voting, **scores, 'predict_seconds':predict_seconds,
+               'defer_no_evidence':empty, 'defer_tie':ties}
+        if 'prediction_variants' in task:
+            row['rule_group'] = variant['rule_group']
+            row['enabled_rule_types'] = ','.join(variant['rule_types'])
+            for kind in ('A1','A2','B1','B2'):
+                row['rules_'+kind] = sum(r['type']==kind for r in rules) if kind in variant['rule_types'] else 0
+            row['active_rule_count'] = sum(row['rules_'+k] for k in ('A1','A2','B1','B2')) if is_oeo else None
+            # 相同预测可用于多个实验；时间是共享测量值，不代表重复训练。
+            results.extend(dict(row, study=study) for study in variant['studies'])
+        else:
+            results.append(row)
     metadata = None if encoder is None else {
         'columns':[str(c) for c in encoder.columns_],
         'bins':{str(c):[float(b) if np.isfinite(b) else None for b in bounds]
@@ -380,3 +403,20 @@ def evaluate_fold(task):
         'classes':labels, 'encoding':metadata, 'rules':rules,
         'rule_count':len(rules) if is_oeo else None,
         'zero_support_rules':sum(r['train_support']==0 for r in rules) if is_oeo else None}
+
+
+def evaluate_candidates(y_true, candidates, n_classes):
+    """保存可累加计数，先合并各折再计算集合指标；空分母返回 None。"""
+    if len(y_true) != len(candidates) or not len(y_true):
+        raise ValueError('Candidate sets must match the nonempty test set')
+    sizes = np.array([len(c) for c in candidates])
+    if np.any(sizes < 1) or np.any(sizes > n_classes):
+        raise ValueError('Invalid candidate set size')
+    hits = np.array([y in c for y,c in zip(y_true,candidates)])
+    partial = (sizes > 1) & (sizes < n_classes)
+    count = int(partial.sum())
+    return {'candidate_hits':int(hits.sum()), 'candidate_size_sum':int(sizes.sum()),
+            'partial_count':count, 'partial_hits':int((hits & partial).sum()),
+            'candidate_hit_rate':float(hits.mean()), 'mean_candidate_size':float(sizes.mean()),
+            'partial_reduction_rate':count/len(y_true),
+            'partial_hit_rate':int((hits & partial).sum())/count if count else None}

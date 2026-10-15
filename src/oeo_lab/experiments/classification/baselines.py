@@ -139,7 +139,18 @@ def create_model(spec, seed):
         return XGBClassifier(**dict(params, random_state=seed, n_jobs=1))
     if name == 'svm_rbf':
         # Pipeline 确保标准化只拟合训练折；其耗时属于 fit/predict。
-        return make_pipeline(StandardScaler(), SVC(**dict(params, random_state=seed)))
+        model = SVC(**dict(params, random_state=seed))
+        return make_pipeline(StandardScaler(), model) if spec.get('scale', True) else model
+    if name == 'logistic':
+        return LogisticRegression(**dict(params, random_state=seed))
+    if name == 'mlp':
+        return MLPClassifier(**dict(params, random_state=seed))
+    if name == 'catboost':
+        from catboost import CatBoostClassifier
+        return CatBoostClassifier(**dict(params, random_seed=seed, thread_count=1))
+    if name == 'lightgbm':
+        from lightgbm import LGBMClassifier
+        return LGBMClassifier(**dict(params, random_state=seed, n_jobs=1))
     if name == 'oeo':
         from oeo_lab.algorithms.classification.classifier import RC_3Woc
         return RC_3Woc(**params)

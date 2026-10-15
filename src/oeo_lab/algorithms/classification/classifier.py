@@ -29,11 +29,12 @@ from oeo_lab.algorithms.construction.three_woc import NewThreeWayForObj
 
 class RC_3Woc(ClassifierMixin, BaseEstimator, NewThreeWayForObj):
     def __init__(self, rule_type=1, threshold=0.5, normalize_confidence=True,
-                 voting="uniform"):
+                 voting="uniform", rule_types=("A1", "A2", "B1", "B2")):
         self.threshold = threshold
         self.RuleSet_= dict()
         self.rule_type = rule_type  # rule_type: 1,positive; 2,negative; 3, all
         self.normalize_confidence = normalize_confidence
+        self.rule_types = rule_types  # 消融实验：只在预测时选择规则类型。
         self.voting = voting  # 新预测方法：uniform、nonzero 或 support。
 
     @staticmethod
@@ -80,7 +81,7 @@ class RC_3Woc(ClassifierMixin, BaseEstimator, NewThreeWayForObj):
             [W,U,V]=[set(),set(),set()]
             [P,Q,R]=[set(),set(),set()]
             n_class_Objs=K2.att2obj({n})
-            self.class_count_[n] = len(n_class_Objs)  # 用于预测时比较训练类别比例。
+            self.class_count_[n] = len(n_class_Objs)  # 仅为旧 predictWithRules_2 保留；新预测不使用。
             non_class_Objs=K2_c.att2obj({n})
             for [extent, [intent, minus]] in base_OEOs:
                 intent, minus = set(intent), set(minus)
@@ -93,20 +94,75 @@ class RC_3Woc(ClassifierMixin, BaseEstimator, NewThreeWayForObj):
             self.RuleSet_.update({ n : [U, V, Q, R]})
         return self
 
-    def predict(self, X):
-        """Predict original class labels; None denotes deferred classification.
+    def predict(self, X, return_candidates=False):
+        """批量预测；None 表示最高分并列时延迟分类。
 
-        Uses all four rule types and self.voting. Legacy rule_type,
-        threshold and normalize_confidence do not control this procedure.
+        默认返回预测数组，兼容 sklearn 的常规调用。
+        return_candidates=True 时返回 (预测数组, 候选集合列表)；
+        每个候选集合为原始类别标签组成的 tuple，与输入行一一对应。
         """
         check_is_fitted(self, ['classes_', 'RuleSet_', 'support_pos_',
-                              'support_neg_', 'class_count_', 'n_samples_fit_'])
+                              'support_neg_', 'n_samples_fit_'])
         X = check_array(X)
-        # object 类型保留原始标签和 None，避免将 defer 转为字符串或数值。
-        return np.array([
-            self.predictWithRules_2(self.RuleSet_, sample, voting=self.voting)
-            for sample in X
-        ], dtype=object)
+        # 两种返回方式共用单样本预测，避免重复计算或决策逻辑不一致。
+        results = [self.predictWithRules(self.RuleSet_, row, voting=self.voting,
+                                        rule_types=self.rule_types)
+                   for row in X]
+        predictions = np.array([result[0] for result in results], dtype=object)
+        if return_candidates:
+            return predictions, [result[1] for result in results]
+        return predictions
+
+    def predictWithRules(self, class_rules, test_sample, voting=None,
+                         rule_types=None, return_details=False):
+        """按论文新规则预测；默认返回 (原始类别或None, 候选类别tuple)。
+
+        rule_types 是 A1/A2/B1/B2 的子集；空集合表示全部禁用。
+        return_details=True 额外提供按 classes_ 顺序排列的得分。
+        """
+        check_is_fitted(self, ['classes_', 'support_pos_', 'support_neg_',
+                              'n_samples_fit_'])
+        voting = self.voting if voting is None else voting
+        rule_types = self.rule_types if rule_types is None else rule_types
+        if voting not in ('uniform', 'nonzero', 'support'):
+            raise ValueError("Unknown voting strategy.")
+        if isinstance(rule_types, str):
+            raise ValueError("rule_types must be a sequence of rule type names.")
+        enabled = set(rule_types)
+        if not enabled <= {'A1', 'A2', 'B1', 'B2'}:
+            raise ValueError("Unknown rule type; use A1, A2, B1, B2.")
+        sample = np.asarray(test_sample)
+        if sample.ndim != 1 or len(sample) != len(self.support_pos_):
+            raise ValueError("test_sample must have the training feature count.")
+        if not np.all((sample == 0) | (sample == 1)):
+            raise ValueError("test_sample must be binary.")
+        if set(class_rules) != set(range(len(self.classes_))):
+            raise ValueError("class_rules must contain every internal class index.")
+        present = self.get_positive_columns(sample)
+
+        def weight(s):
+            return 1 if voting == 'uniform' else (int(s > 0) if voting == 'nonzero' else int(s))
+
+        scores, plus, minus = [], [], []
+        for n in range(len(self.classes_)):
+            U, V, Q, R = map(set, class_rules[n])
+            positive = ((sum(weight(self.support_pos_[a]) for a in U & present) if 'A1' in enabled else 0)
+                        + (sum(weight(self.support_neg_[b]) for b in V - present) if 'A2' in enabled else 0))
+            negative = ((sum(weight(self.support_pos_[c]) for c in Q & present) if 'B1' in enabled else 0)
+                        + (sum(weight(self.support_neg_[d]) for d in R - present) if 'B2' in enabled else 0))
+            plus.append(positive); minus.append(negative); scores.append(positive-negative)
+        # 支持度权重共享分母，先用整数比较，避免浮点误差打破真实并列。
+        best = max(scores)
+        candidates = tuple(self.classes_[n] for n, score in enumerate(scores) if score == best)
+        prediction = candidates[0] if len(candidates) == 1 else None
+        if not return_details:
+            return prediction, candidates
+        denominator = self.n_samples_fit_ if voting == 'support' else 1
+        return {'prediction': prediction, 'candidates': candidates,
+                'classes': tuple(self.classes_),
+                'scores': np.asarray(scores, dtype=float)/denominator,
+                'supporting': np.asarray(plus, dtype=float)/denominator,
+                'excluding': np.asarray(minus, dtype=float)/denominator}
 
     def get_positive_columns(self, row_data):
         positive_columns = set()

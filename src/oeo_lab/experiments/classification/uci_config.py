@@ -26,14 +26,25 @@ MODELS = {
     'svm_rbf': {'estimator': 'svm_rbf', 'input': 'raw', 'params': {'kernel': 'rbf', 'C': 1.0, 'gamma': 'scale'}},
     'rc-oeo': {'estimator': 'oeo', 'input': 'context', 'params': {}},
 }
-EXECUTION = {'n_jobs': 1, 'min_free_gb': 2.0, 'worker_ramp_sec': 0.2,
+EXECUTION = {'n_jobs': 18, 'min_free_gb': 2.0, 'worker_ramp_sec': 0.2,
              'memory_wait_timeout_sec': 300, 'task_timeout_sec': None, 'resume': True}
 OUTPUT = {'root': str(PROJECT_ROOT / 'results/classification'),
-          'results': 'uci_results.xlsx', 'checkpoint_dir': 'checkpoints',
-          'index': 'uci_index.json', 'template': '{task_id}.json'}
+          'results': 'uci_three_studies.xlsx', 'checkpoint_dir': 'checkpoints',
+          'index': 'uci_three_studies_index.json', 'template': '{task_id}.json'}
 PACKAGES = ['numpy', 'pandas', 'scikit-learn', 'threadpoolctl', 'openpyxl']
 SOURCE_PATTERNS = ['src/fca_core/*.py', 'src/oeo_lab/algorithms/construction/*.py',
     'src/oeo_lab/algorithms/classification/classifier.py', 'src/oeo_lab/preprocessing/encoding.py',
     'src/oeo_lab/experiments/common/*.py',
     *['src/oeo_lab/experiments/classification/' + f for f in
-      ('uci_experiment.py', 'datasets.py', 'splits.py', 'baselines.py', 'evaluate.py', 'runner.py')]]
+      ('uci_experiment.py', 'uci_config.py', 'datasets.py', 'splits.py', 'baselines.py', 'evaluate.py', 'runner.py')]]
+
+# 消融组合只控制预测；训练时始终提取完整规则，便于共享一次 fit。
+RULE_GROUPS = {
+    'all': ('A1','A2','B1','B2'),
+    'support_only': ('A1','A2'),
+    'exclusion_only': ('B1','B2'),
+    'without_A1': ('A2','B1','B2'),
+    'without_A2': ('A1','B1','B2'),
+    'without_B1': ('A1','A2','B2'),
+    'without_B2': ('A1','A2','B1'),
+}

@@ -342,11 +342,19 @@ def summarize_classification(tasks, directory, output, template):
             base.update(protocol=task['protocol'], entity_overlap=task['split']['entity_overlap'])
         if 'fraction' in task:
             base.update(fraction=task['fraction'], n_train_entities=task['n_train_entities'])
+        # 独立样本预算必须进入记录及聚合键，不能混合不同训练规模。
+        if 'train_budget' in task:
+            base.update(train_budget=task['train_budget'], train_per_class=task['train_per_class'])
         status = saved.get('status','pending')
         states.append({**base,'status':status,'error':saved.get('error')})
         variants = task['voting'] if task['model']['estimator']=='oeo' else ['baseline']
         if status != 'ok':
-            folds.extend({**base,'voting':v,'status':status} for v in variants)
+            if 'prediction_variants' in task:
+                folds.extend({**base,'voting':v['voting'],'rule_group':v['rule_group'],
+                              'study':study,'status':status}
+                             for v in task['prediction_variants'] for study in v['studies'])
+            else:
+                folds.extend({**base,'voting':v,'status':status} for v in variants)
             continue
         result = saved['result']
         timing = {k:result[k] for k in ['fit_seconds','preprocessing_fit_seconds',
@@ -358,10 +366,14 @@ def summarize_classification(tasks, directory, output, template):
     frame = pd.DataFrame(folds)
     per_seed = []
     keys = ['dataset','model','max_bins','voting','seed']
+    if 'study' in frame:
+        keys = ['study','rule_group'] + keys
     if 'protocol' in frame:
         keys.insert(1, 'protocol')  # 两种划分分别聚合，禁止混合平均。
     if 'fraction' in frame:
         keys.insert(2, 'fraction')  # 各比例独立聚合固定测试折的 OOF 结果。
+    if 'train_budget' in frame:
+        keys = ['train_budget','train_per_class'] + keys
     for group_key, group in frame.groupby(keys,dropna=False,sort=False):
         row = dict(zip(keys,group_key))
         row.update(expected_folds=len(group), completed_folds=int(group.status.eq('ok').sum()))
@@ -378,7 +390,18 @@ def summarize_classification(tasks, directory, output, template):
             row.update(n_test=total,n_classified=accepted,n_correct=correct,
                        coverage=accepted/total,classified_accuracy=correct/accepted if accepted else None,
                        overall_correct_rate=correct/total,macro_f1=sum(f1)/len(f1))
-            for k in ['fit_seconds','train_seconds','predict_seconds','preprocessing_test_seconds',
+            row['macro_precision']=sum(t/(t+p) if t+p else 0.0 for t,p,n in per_class.values())/len(per_class)
+            row['macro_recall']=sum(t/(t+n) if t+n else 0.0 for t,p,n in per_class.values())/len(per_class)
+            if 'candidate_hits' in group:
+                for k in ('candidate_hits','candidate_size_sum','partial_count','partial_hits'):
+                    row[k]=int(group[k].sum())
+                row['candidate_hit_rate']=row['candidate_hits']/total
+                row['mean_candidate_size']=row['candidate_size_sum']/total
+                row['partial_reduction_rate']=row['partial_count']/total
+                row['partial_hit_rate']=row['partial_hits']/row['partial_count'] if row['partial_count'] else None
+            for k in ('active_rule_count','rules_A1','rules_A2','rules_B1','rules_B2'):
+                if k in group:row[k]=float(group[k].mean())
+            for k in ['fit_seconds','train_seconds','predict_seconds','preprocessing_fit_seconds','preprocessing_test_seconds',
                       'defer_no_evidence','defer_tie']:
                 row[k]=float(group[k].sum())
             if group.rule_count.notna().any():
@@ -389,11 +412,17 @@ def summarize_classification(tasks, directory, output, template):
     metrics=['coverage','classified_accuracy','overall_correct_rate','macro_f1',
              'fit_seconds','train_seconds','predict_seconds','preprocessing_test_seconds','rule_count',
              'defer_no_evidence','defer_tie']
+    metrics += ['macro_precision','macro_recall','candidate_hit_rate','mean_candidate_size',
+                'partial_reduction_rate','partial_hit_rate','active_rule_count',
+                'rules_A1','rules_A2','rules_B1','rules_B2','preprocessing_fit_seconds']
     for key,g in seed_frame.groupby(keys[:-1],dropna=False,sort=False):
         row=dict(zip(keys[:-1],key));row.update(expected_seeds=len(g),completed_seeds=int(g.complete.sum()))
         row['complete']=bool(g.complete.all())
         for metric in metrics:
-            if metric not in g:continue
+            if metric not in g:
+                row[metric+'_defined_seeds']=0
+                row[metric+'_mean']=row[metric+'_std']=None
+                continue
             values=pd.to_numeric(g[metric],errors='coerce')
             row[metric+'_defined_seeds']=int(values.notna().sum())
             row[metric+'_mean']=values.mean() if row['complete'] else None

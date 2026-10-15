@@ -36,4 +36,13 @@ SOURCE_PATTERNS = ['src/fca_core/*.py', 'src/oeo_lab/algorithms/construction/*.p
     'src/oeo_lab/algorithms/classification/classifier.py', 'src/oeo_lab/preprocessing/encoding.py',
     'src/oeo_lab/experiments/common/*.py',
     *['src/oeo_lab/experiments/classification/' + f for f in
-      ('bitcoin_experiment.py', 'bitcoin_data.py', 'datasets.py', 'splits.py', 'baselines.py', 'evaluate.py', 'runner.py')]]
+      ('bitcoin_experiment.py', 'bitcoin_config.py', 'bitcoin_data.py', 'datasets.py', 'splits.py', 'baselines.py', 'evaluate.py', 'runner.py')]]
+
+# BABD仅提供地址标识，不能把地址当成控制实体并声称实体泛化。
+DATASETS = {
+    'legacy': DATASET,
+    'babd13': {'kind':'bitcoin', 'path':'raw/public/babd13/BABD-13-clean.csv',
+        'decision_column':'label', 'group_column':'account', 'address_column':'account',
+        'group_kind':'address', 'class_ids':[0,1,2,3,4,5,6,9,10,11,12],
+        'feature_manifest':'raw/public/babd13/cleaning_report.json'},
+}

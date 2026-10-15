@@ -1,5 +1,6 @@
 """Bitcoin 应用分类入口；模型共享划分，实体级协议禁止实体交叉。"""
 import argparse
+import json
 import numpy as np
 import hashlib
 import sys
@@ -14,9 +15,10 @@ from ..common.provenance import collect_provenance
 from ..common.checkpoints import task_id
 
 
-def parse_args(argv=None):
+def parse_args(argv=None, defaults=None):
     """显式参数覆盖配置；不依据测试结果搜索分箱参数。"""
     p=argparse.ArgumentParser(description=__doc__)
+    p.add_argument('--dataset', choices=list(config.DATASETS), default='legacy')
     p.add_argument('--protocols',nargs='+',choices=['address','entity'],default=config.PROTOCOLS)
     p.add_argument('--models',nargs='+',choices=list(config.MODELS),default=list(config.MODELS))
     p.add_argument('--max-bins',nargs='+',type=int,default=config.MAX_BINS)
@@ -27,12 +29,15 @@ def parse_args(argv=None):
     p.add_argument('--timeout',type=float,default=config.EXECUTION['task_timeout_sec'])
     p.add_argument('--results-root',default=config.OUTPUT['root'])
     p.add_argument('--dry-run',action='store_true')
+    if defaults:p.set_defaults(**defaults)
     a=p.parse_args(argv)
     if a.n_jobs<1 or a.folds<2 or any(b<3 for b in a.max_bins):p.error('n-jobs>=1, folds>=2, max-bins>=3 required')
     if a.timeout is not None and a.timeout<=0:p.error('timeout must be positive')
     if len(set(a.seeds))!=len(a.seeds):p.error('Duplicate seeds')
     if any(not 0<f<=1 for f in a.fractions) or len(set(a.fractions))!=len(a.fractions):
         p.error('fractions must be unique values in (0,1]')
+    if a.dataset=='babd13' and 'entity' in a.protocols:
+        p.error('BABD has no verified entity IDs; use address protocol')
     return a
 
 
@@ -55,10 +60,16 @@ def training_subsets(split, y, groups, fractions):
 
 def build_tasks(args, provenance):
     """模型无关地生成一次划分；raw 基线不随分箱数重复，OEO 三策略合为一任务。"""
-    path=config.DATA_ROOT/config.DATASET['path']
-    spec=dict(config.DATASET,path=str(path),sha256=hashlib.sha256(path.read_bytes()).hexdigest())
+    dataset=config.DATASET if args.dataset == 'legacy' else config.DATASETS[args.dataset]
+    path=config.DATA_ROOT/dataset['path']
+    spec=dict(dataset,path=str(path),sha256=hashlib.sha256(path.read_bytes()).hexdigest())
+    if 'feature_manifest' in spec:
+        manifest=json.loads((config.DATA_ROOT/spec.pop('feature_manifest')).read_text())
+        spec['feature_columns']=manifest['features']
+        if set(spec['feature_columns']) & {'account','SW','label'}:
+            raise ValueError('Identifiers/label provenance must not enter features')
     X,y,labels,groups=load_bitcoin_dataset(spec)
-    print(f'Bitcoin: samples={len(y)}, features={X.shape[1]}, classes={labels}, entities={len(set(groups))}',flush=True)
+    print(f'{args.dataset}: samples={len(y)}, features={X.shape[1]}, classes={labels}, groups({spec.get("group_kind","entity")})={len(set(groups))}',flush=True)
     tasks=[]
     for protocol in dict.fromkeys(args.protocols):
         plan=make_splits(y,protocol=protocol,groups=groups,n_splits=args.folds,seeds=args.seeds)
@@ -68,18 +79,31 @@ def build_tasks(args, provenance):
                     model=config.MODELS[model_name]
                     bins=list(dict.fromkeys(args.max_bins)) if model['input']=='context' else [None]
                     for b in bins:
-                        task={'experiment':'bitcoin_classification','name':'bitcoin','protocol':protocol,
+                        task={'experiment':'bitcoin_classification','name':args.dataset if args.dataset!='legacy' else 'bitcoin','protocol':protocol,
                               'dataset':spec,'split':sampled,'fraction':fraction,
-                              'n_train_entities':entity_count,'split_sha256':plan['assignment_sha256'],
+                              'n_train_entities':entity_count if spec.get('group_kind')!='address' else None,'split_sha256':plan['assignment_sha256'],
                               'inventory':plan['inventory'],'model_name':model_name,'model':model,
                               'max_bins':b,'min_data_in_bin':config.MIN_DATA_IN_BIN,
                               'voting':config.VOTING,'provenance':provenance}
+                        if args.dataset!='legacy':
+                            task['prediction_variants']=[{'voting':v,'rule_group':'all',
+                                'rule_types':['A1','A2','B1','B2'],'studies':['application']}
+                                for v in config.VOTING]
                         task['id']=task_id(task);tasks.append(task)
     return tasks
 
 
 def main(argv=None):
-    args=parse_args(argv)
+    # 自建数据入口恢复原参数；公共 BABD 使用独立入口。
+    dataset = 'legacy'
+    max_bins = config.MAX_BINS
+    seeds = config.SEEDS
+    folds = config.FOLDS
+    fractions = [0.2, 0.4, 0.6, 0.8, 1.0]
+    models = list(config.MODELS)
+    protocols = config.PROTOCOLS
+    args=parse_args(argv, dict(dataset=dataset, max_bins=max_bins, seeds=seeds,
+        folds=folds, fractions=fractions, models=models, protocols=protocols, n_jobs=1))
     settings=dict(config.EXECUTION,n_jobs=args.n_jobs,task_timeout_sec=args.timeout)
     packages=list(config.PACKAGES)
     if any(config.MODELS[n]['estimator']=='xgboost' for n in args.models):packages.append('xgboost')
@@ -93,16 +117,11 @@ def main(argv=None):
     print(f"任务={len(tasks)}, folds={args.folds}, seeds={args.seeds}, max_bins={args.max_bins}, "
           f"fractions={args.fractions}, n_jobs={args.n_jobs}, timeout={args.timeout}, output={args.results_root}",flush=True)
     if args.dry_run:return
-    run_classification_tasks(tasks,settings,dict(config.OUTPUT,root=args.results_root))
+    output=dict(config.OUTPUT,root=args.results_root)
+    if args.dataset!='legacy':
+        output.update(results=args.dataset+'_results.xlsx',index=args.dataset+'_index.json')
+    run_classification_tasks(tasks,settings,output)
 
 
 if __name__=='__main__':
-    # 脚本设置作为默认值；终端只覆盖同名参数，其他设置保留。
-    fractions = [0.2, 0.4, 0.6, 0.8, 1.0]
-    max_bins = config.MAX_BINS
-    models = list(config.MODELS)
-    protocols = config.PROTOCOLS
-    n_jobs = config.EXECUTION['n_jobs']
-    experiment_args = ['--fractions', *map(str,fractions), '--max-bins', *map(str,max_bins), '--models', *models,
-                       '--protocols', *protocols, '--n-jobs', str(n_jobs)]
-    main(experiment_args + sys.argv[1:])
+    main(sys.argv[1:])

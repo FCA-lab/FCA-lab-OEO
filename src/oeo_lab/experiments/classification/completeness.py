@@ -2,6 +2,7 @@
 import argparse
 import contextlib
 import hashlib
+from functools import partial
 import json
 import os
 import sys
@@ -35,6 +36,11 @@ def load_dataset(spec):
                         sep=r'\s+' if spec['format'] == 'whitespace' else ',')
     if frame.empty or frame.isna().any().any():
         raise ValueError('Empty data or missing values')
+    # 有表头的数据显式跳过表头，列仍用位置编号，兼容既有配置。
+    if spec.get('header', False):
+        frame = frame.iloc[1:].reset_index(drop=True)
+        if frame.empty:
+            raise ValueError('Dataset has a header but no data rows')
     decision = spec['decision_column']
     y = frame[decision].to_numpy()
     features = frame.drop(columns=[decision] + spec['id_columns'])
@@ -130,7 +136,7 @@ def extract_full_lattice_rules(X, y, classes):
     return builder, concepts, class_masks, rules, construction_seconds, extraction_seconds
 
 
-def compare_context(X, y):
+def compare_context(X, y, on_direct_complete=None):
     """在同一背景执行两条路线；计时之外核验支持集、概念及规则差集。"""
     X = np.asarray(X)
     y = np.asarray(y)
@@ -141,6 +147,16 @@ def compare_context(X, y):
     # 算法内部保持单线程；任务级并行由公共 runner 控制。
     with threadpool_limits(limits=1), open(os.devnull, 'w') as sink, contextlib.redirect_stdout(sink):
         model, direct_seconds = extract_direct_rules(X, y)
+        # 直接路线完成即落盘；完整构造失败或中断不会丢失该阶段结果。
+        if on_direct_complete is not None:
+            rules = expand_rules(model.RuleSet_)
+            on_direct_complete({
+                'metrics': dict(n_objects=int(X.shape[0]), n_attributes=int(X.shape[1]),
+                                density=float(np.count_nonzero(X) / X.size),
+                                direct_seconds=direct_seconds, direct_rules=len(rules),
+                                **{'direct_' + kind: sum(r[0] == kind for r in rules)
+                                   for kind in TYPES}),
+                'classes': model.classes_.tolist(), 'direct_rules': sorted(rules)})
         builder, concepts, class_masks, reference, construction_seconds, extraction_seconds = (
             extract_full_lattice_rules(X, y, model.classes_))
     # Normalization, independent semantic checks and reporting are outside timing.
@@ -193,10 +209,20 @@ def compare_context(X, y):
             'full_oracle_difference': sorted(reference ^ oracle)}
 
 
-def execute(task):
+def execute(task, checkpoint_directory=None):
     """单个工作进程入口：预处理不计入规则提取时间。"""
     X, y, names = load_dataset(task['dataset'])
-    result = compare_context(X, y)
+    def record_direct(result):
+        result['metrics']['n_features_raw'] = names['n_features_raw']
+        result['attributes'] = names
+        # 单独的原子检查点，避免被公共调度器的失败/超时记录覆盖。
+        path = Path(checkpoint_directory) / config.OUTPUT['direct_checkpoint_template'].format(task_id=task['id'])
+        save(path, {'task': task, 'status': 'direct_complete', 'result': result})
+        print(f"[直接提取完成] {task['name']} bins={task['dataset'].get('max_bins')} "
+              f"time={result['metrics']['direct_seconds']:.6f}s "
+              f"rules={result['metrics']['direct_rules']}; 已保存，开始完整构造",
+              file=sys.__stdout__, flush=True)
+    result = compare_context(X, y, record_direct if checkpoint_directory is not None else None)
     result['metrics']['n_features_raw'] = names['n_features_raw']
     result['attributes'] = names
     return result
@@ -212,7 +238,16 @@ def summarize(tasks, directory, output):
             record = {}
         row = {'task_id': task['id'], 'dataset': task['name'], 'max_bins': task['dataset'].get('max_bins'),
                'repeat': task.get('repeat', 0), 'status': record.get('status', 'pending'), 'error': record.get('error')}
+        # 任务未全部完成时仍汇总直接路线；不填造完整耗时或比较结论。
+        direct_path = directory / config.OUTPUT['direct_checkpoint_template'].format(task_id=task['id'])
+        direct_record = json.loads(direct_path.read_text()) if direct_path.exists() else {}
+        row['direct_status'] = 'pending'
+        if (same_task(direct_record.get('task'), task)
+                and direct_record.get('status') == 'direct_complete'):
+            row.update(direct_record['result']['metrics'])
+            row['direct_status'] = 'ok'
         if row['status'] == 'ok':
+            row['direct_status'] = 'ok'
             result = record['result']
             row.update(result['metrics'])
             for key in ('missing_rules', 'extra_rules', 'direct_oracle_difference', 'full_oracle_difference'):
@@ -303,6 +338,9 @@ def run_experiment(tasks, settings, out):
     save(index, snapshot)
     # A mismatched/incomplete old record must not mask a crashed retry.
     for task in tasks:
+        direct_path = directory / config.OUTPUT['direct_checkpoint_template'].format(task_id=task['id'])
+        if not settings['resume'] and direct_path.exists():
+            direct_path.unlink()
         path = directory / config.OUTPUT['checkpoint_template'].format(task_id=task['id'])
         if path.exists() and (not settings['resume'] or not completed(path, task)):
             old = json.loads(path.read_text())
@@ -310,7 +348,8 @@ def run_experiment(tasks, settings, out):
             save(archive, old)
             path.unlink()
     try:
-        run_tasks(tasks, execute, directory, settings, config.OUTPUT['checkpoint_template'])
+        worker = partial(execute, checkpoint_directory=str(directory))
+        run_tasks(tasks, worker, directory, settings, config.OUTPUT['checkpoint_template'])
     finally:
         passed = summarize(tasks, directory, out/config.OUTPUT['files']['completeness'])
     if not passed:
@@ -333,7 +372,7 @@ def main(argv=None):
 
 if __name__ == '__main__':
     # 本次实验的运行参数：在此修改即可；未列出的选项仍读取配置文件。
-    max_bins = [5, 10, 20]
+    max_bins = [5, 8, 10]
     experiment_args = [
     '--max-bins', *map(str, max_bins),
     '--n-jobs', '20',

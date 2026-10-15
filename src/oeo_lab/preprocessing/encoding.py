@@ -24,6 +24,8 @@ class LeakFreeContextEncoder(BaseEstimator, TransformerMixin):
     def _GreedyFindBin(self, distinct_values, counts, num_distinct_values, max_bin, total_cnt, min_data_in_bin=3):
         bin_upper_bound = list()
         assert (max_bin > 0)
+        if max_bin == 1:
+            return [float("Inf")]
         if num_distinct_values <= max_bin:
             cur_cnt_inbin = 0
             for i in range(num_distinct_values - 1):
@@ -46,7 +48,9 @@ class LeakFreeContextEncoder(BaseEstimator, TransformerMixin):
                     is_big_count_value[i] = True
                     rest_bin_cnt -= 1
                     rest_sample_cnt -= counts[i]
-            mean_bin_size = rest_sample_cnt / rest_bin_cnt
+            # 所余箱均已预留给高频取值时，无可分配的普通箱。
+            # 不再按普通样本均值触发分箱，避免除零；高频取值仍独立触发。
+            mean_bin_size = rest_sample_cnt / rest_bin_cnt if rest_bin_cnt > 0 else float('inf')
             upper_bounds = [float('Inf')] * max_bin
             lower_bounds = [float('Inf')] * max_bin
             bin_cnt = 0
@@ -66,7 +70,7 @@ class LeakFreeContextEncoder(BaseEstimator, TransformerMixin):
                     cur_cnt_inbin = 0
                     if not is_big_count_value[i]:
                         rest_bin_cnt -= 1
-                        mean_bin_size = rest_sample_cnt / rest_bin_cnt
+                        mean_bin_size = rest_sample_cnt / rest_bin_cnt if rest_bin_cnt > 0 else float('inf')
             bin_cnt += 1
             for i in range(bin_cnt - 1):
                 bin_upper_bound.append((upper_bounds[i] + lower_bounds[i + 1]) / 2.0)

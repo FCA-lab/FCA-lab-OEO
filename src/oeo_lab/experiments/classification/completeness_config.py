@@ -12,6 +12,9 @@ DATASETS = {
                  "decision_column": 4, "id_columns": [], "feature_kind": "categorical"},
     "lenses": {"path": "raw/uci/lenses/lenses.data", "format": "whitespace",
                "decision_column": 5, "id_columns": [0], "feature_kind": "categorical"},
+    "covid19": {"path": "raw/uci/covid19_surveillance/Surveillance.csv", "format": "csv",
+                "header": True, "decision_column": 7, "id_columns": [],
+                "feature_kind": "categorical"},
     "iris": {"path": "raw/uci/iris/iris.data", "format": "csv",
              "decision_column": 4, "id_columns": [], "feature_kind": "numerical"}
 }
@@ -38,6 +41,7 @@ OUTPUT = {
     "files": {"completeness": "completeness_results.xlsx"},
     "checkpoint_dir": "checkpoints", "checkpoint_index": "index.json",
     "checkpoint_template": "{task_id}.json",
+    "direct_checkpoint_template": "{task_id}.direct.json",  # 直接提取完成即保存。
 }
 
 # 运行记录范围：算法及运行代码变化会生成新任务标识。
