@@ -26,7 +26,7 @@ MODELS = {
     'svm_rbf': {'estimator': 'svm_rbf', 'input': 'raw', 'params': {'kernel': 'rbf', 'C': 1.0, 'gamma': 'scale'}},
     'rc-oeo': {'estimator': 'oeo', 'input': 'context', 'params': {}},
 }
-EXECUTION = {'n_jobs': 10, 'min_free_gb': 2.0, 'worker_ramp_sec': 0.2,
+EXECUTION = {'n_jobs': 10, 'worker_ramp_sec': 0.2,
              'memory_wait_timeout_sec': 300, 'task_timeout_sec': None, 'resume': True}
 OUTPUT = {'root': str(PROJECT_ROOT / 'results/classification'),
           'results': 'bitcoin_results.xlsx', 'checkpoint_dir': 'checkpoints',

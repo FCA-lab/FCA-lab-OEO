@@ -18,7 +18,9 @@ MODELS = {
     'svm_rbf': {'estimator':'svm_rbf','input':'context','scale':False,'params':{'C':1.0,'gamma':'scale'}},
     'mlp': {'estimator':'mlp','input':'context','params':{'hidden_layer_sizes':(100,),'max_iter':500}},
 }
-EXECUTION = {'n_jobs':1,'min_free_gb':2.0,'worker_ramp_sec':0.2,
+# 仅 BABD 启用双队列；比例是进程名额，不是 CPU 绑核。队列清空后共享空闲名额。
+# 内存阈值统一由 experiments.common.scheduling_config 提供。
+EXECUTION = {'scheduler':'babd_rc_oeo','rc_oeo_share':0.2,'n_jobs':1,'worker_ramp_sec':0.2,
     'memory_wait_timeout_sec':300,'task_timeout_sec':None,'resume':True}
 OUTPUT = {'root':str(PROJECT_ROOT/'results/classification'),'checkpoint_dir':'checkpoints',
     'template':'{task_id}.json'}

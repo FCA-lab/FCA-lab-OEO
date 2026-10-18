@@ -31,8 +31,7 @@ COMPLETENESS = {
 
 EXECUTION = {
     "n_jobs": 1, "tasks_per_worker": 1, "resume": True,
-    "keep_partial": True, "min_free_gb": 2.0, "worker_ramp_sec": 0.2,
-    # 以下两个参数由后续公共任务管理接口读取，旧 runner 暂不支持。
+    "keep_partial": True, "worker_ramp_sec": 0.2,
     "memory_wait_timeout_sec": 300, "task_timeout_sec": None,
 }
 
@@ -50,6 +49,7 @@ SOURCE_PATTERNS = [
     'src/oeo_lab/algorithms/construction/*.py',
     'src/oeo_lab/algorithms/classification/classifier.py',
     'src/oeo_lab/preprocessing/encoding.py',
+    'src/oeo_lab/preprocessing/categorical.py',
     'src/oeo_lab/experiments/classification/completeness.py',
     'src/oeo_lab/experiments/common/*.py',
 ]

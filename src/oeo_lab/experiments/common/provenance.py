@@ -11,6 +11,8 @@ def collect_provenance(root, source_patterns, packages, settings):
     检查范围是运行依赖是否可定位，并不等价于证明实验可复现。
     实验参数由调用方显式传入，避免读取其他实验的配置文件。
     """
+    from .scheduling_config import effective_settings
+    settings = effective_settings(settings)
     versions = {}
     for name in packages:
         try:
@@ -25,6 +27,18 @@ def collect_provenance(root, source_patterns, packages, settings):
         sources.update(matches)
     hashes = {str(p.relative_to(root)): hashlib.sha256(p.read_bytes()).hexdigest()
               for p in sorted(sources)}
-    return {'python': platform.python_version(), 'platform': platform.platform(),
+    result = {'python': platform.python_version(), 'platform': platform.platform(),
             'packages': versions, 'settings': settings, 'sources': hashes,
             'source_hash': digest(hashes)}
+
+    # Preserve raw hashes for audit. Shared scheduling files do not affect task identity.
+    from .resume_identity import computation_hash, TRANSPORT, PREFIX
+    parsed_sources = {PREFIX + 'classification/runner.py', PREFIX + 'common/runner.py'}
+    parsed_sources.update(PREFIX + 'classification/' + name for name in (
+        'babd_config.py','uci_config.py','bitcoin_config.py','elliptic_config.py',
+        'tabpfn_config.py','completeness_config.py','config.py'))
+    result['computation_sources'] = {
+        path: (computation_hash(path, (root/path).read_text())
+               if path in parsed_sources else raw_hash)
+        for path, raw_hash in hashes.items() if path not in TRANSPORT}
+    return result

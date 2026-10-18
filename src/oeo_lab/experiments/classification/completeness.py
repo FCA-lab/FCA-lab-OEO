@@ -80,13 +80,9 @@ def encode_numerical(features, spec):
 
 
 def encode_categorical(features):
-    """逐列编码类别值，不把不同原始列中的同名取值合并。"""
-    blocks, names = [], []
-    for column in features:
-        for value in sorted(features[column].unique()):
-            blocks.append(features[column].eq(value).to_numpy(dtype=np.int8))
-            names.append({'column': int(column), 'value': str(value)})
-    return np.column_stack(blocks), {'kind': 'categorical', 'columns': names}
+    """复用公共类别编码；完备性实验在整个背景上拟合。"""
+    from oeo_lab.preprocessing.categorical import encode_categorical as encode
+    return encode(features)
 
 
 def expand_rules(rule_set):

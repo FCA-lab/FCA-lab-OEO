@@ -35,8 +35,12 @@ def task_identity(task):
     provenance = value.get('provenance', {})
     settings = provenance.get('settings', {})
     for key in ('n_jobs','min_free_gb','worker_ramp_sec','memory_wait_timeout_sec',
-                'task_timeout_sec','resume','keep_partial','tasks_per_worker'):
+                'task_timeout_sec','resume','keep_partial','tasks_per_worker',
+                'scheduler','rc_oeo_share','memory_resume_margin_gb'):
         settings.pop(key, None)
+    # 2026-10-18: scheduling/storage changes do not change BABD calculations.
+    from .resume_identity import normalize_provenance
+    normalize_provenance(provenance)
     return value
 
 
@@ -46,3 +50,51 @@ def task_id(task):
 
 def same_task(saved, current):
     return isinstance(saved, dict) and task_identity(saved) == task_identity(current)
+
+
+def recover_compatible_checkpoints(tasks, directory, template="{task_id}.json"):
+    """Find successful legacy IDs once, preserving their original provenance.
+
+    Scan one file at a time: do not retain historical sample indices in memory.
+    Failed/unknown computation versions cannot satisfy the identity comparison.
+    """
+    import re
+    directory = Path(directory)
+    wanted = {task_id(t): t for t in tasks
+              if not completed(directory/template.format(task_id=t['id']), t)}
+    if not wanted or not directory.exists():
+        return 0
+    recovered = 0
+    # Legacy checkpoints have 24-hex task IDs; never read task index JSON here.
+    pattern = re.compile('^' + re.escape(template).replace(
+        re.escape('{task_id}'), '[0-9a-f]{24}') + '$')
+    paths = sorted(p for p in directory.iterdir() if pattern.match(p.name))
+    print(f"[检查点检查] 待匹配 {len(wanted)} 个任务，扫描 {len(paths)} 个历史文件", flush=True)
+    for i, path in enumerate(paths, 1):
+        try:
+            record = json.loads(path.read_text())
+            saved = record.get('task')
+            if record.get('status') != 'ok' or not isinstance(saved, dict):
+                continue
+            key = task_id(saved)
+            current = wanted.get(key)
+            if current is None or not same_task(saved, current):
+                continue
+            target = directory/template.format(task_id=current['id'])
+            if target.exists():
+                # Preserve a failed/incompatible attempt before installing a match.
+                import time
+                target.rename(target.with_name(target.stem+'.previous-'+str(time.time_ns())+'.json'))
+            record['reused_from'] = str(path.name)
+            save(target, record)
+            del wanted[key]
+            recovered += 1
+        except (OSError, ValueError, TypeError, KeyError):
+            # Corrupt checkpoint: leave it untouched and recompute the task.
+            continue
+        if i % 100 == 0:
+            print(f"[检查点检查] 已扫描 {i}/{len(paths)}，找到 {recovered} 个兼容结果", flush=True)
+        if not wanted:
+            break
+    print(f"[检查点恢复] 复用旧 ID 的成功结果 {recovered} 个", flush=True)
+    return recovered

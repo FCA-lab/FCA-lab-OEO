@@ -461,7 +461,13 @@ def run_classification_tasks(tasks, settings, output):
     from ..common.checkpoints import completed,save
     root=Path(output['root']);root.mkdir(parents=True,exist_ok=True)
     directory=root/output['checkpoint_dir'];template=output['template']
-    save(directory/output['index'],{'tasks':tasks})
+    # 参数组合只引用共享划分，避免重复保存十万级测试样本编号。
+    from ..common.task_index import save_task_index
+    save_task_index(directory/output['index'], tasks)
+    # Recover legacy filenames before dispatch; successful scientific results are unchanged.
+    if settings.get("resume", True) and any(t.get("name", "").startswith("babd_") for t in tasks):
+        from ..common.checkpoints import recover_compatible_checkpoints
+        recover_compatible_checkpoints(tasks, directory, template)
     for task in tasks:
         path=directory/template.format(task_id=task['id'])
         if settings.get('resume',True) and completed(path,task):

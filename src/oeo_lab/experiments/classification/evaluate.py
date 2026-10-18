@@ -331,7 +331,10 @@ def evaluate_fold(task):
     """一个任务=一个折×一个模型×一个输入设置；OEO 一次 fit 服务三种策略。"""
     from .datasets import load_numeric_dataset
     from .baselines import create_model
-    if task['dataset'].get('kind') == 'elliptic':
+    if task['dataset'].get('feature_kind') == 'categorical':
+        from .uci_data import load_uci_dataset
+        X,y,labels = load_uci_dataset(task['dataset'])
+    elif task['dataset'].get('kind') == 'elliptic':
         from .elliptic_experiment import load_elliptic_dataset
         X,y,labels,_,_ = load_elliptic_dataset(task['dataset'])
     elif task['dataset'].get('kind') == 'bitcoin':
@@ -344,8 +347,14 @@ def evaluate_fold(task):
     y_train, y_test = y[train], y[test]
     encoder = None
     start = time.perf_counter()
-    if task['model']['input'] == 'context':
-        encoder = LeakFreeContextEncoder(list(X.columns), task['max_bins'], task['min_data_in_bin'])
+    # 类别特征直接 one-hot；数值特征保留原分箱后 one-hot 的实现。
+    categorical = task['dataset'].get('feature_kind') == 'categorical'
+    if categorical or task['model']['input'] == 'context':
+        if categorical:
+            from oeo_lab.preprocessing.categorical import CategoricalContextEncoder
+            encoder = CategoricalContextEncoder()
+        else:
+            encoder = LeakFreeContextEncoder(list(X.columns), task['max_bins'], task['min_data_in_bin'])
         X_train = encoder.fit_transform(X_train).to_numpy()
         preprocessing_fit_seconds = time.perf_counter() - start
         start = time.perf_counter()

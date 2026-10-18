@@ -14,7 +14,7 @@ MODELS={
  'logistic':{'estimator':'logistic','input':'context','params':{'max_iter':1000}},
  'xgboost':{'estimator':'xgboost','input':'context','params':{'n_estimators':300,'tree_method':'hist','eval_metric':'logloss'}}}
 RULE_GROUPS={'all':['A1','A2','B1','B2'],'positive':['A1','A2'],'negative':['B1','B2']}
-EXECUTION={'n_jobs':1,'min_free_gb':2.0,'worker_ramp_sec':0.2,
+EXECUTION={'n_jobs':1,'worker_ramp_sec':0.2,
  'memory_wait_timeout_sec':300,'task_timeout_sec':None,'resume':True}
 OUTPUT={'root':str(PROJECT_ROOT/'results/classification'),'results':'elliptic_results.xlsx',
  'index':'elliptic_index.json','checkpoint_dir':'checkpoints','template':'{task_id}.json'}

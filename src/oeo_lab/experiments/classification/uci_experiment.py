@@ -72,6 +72,36 @@ def rule_ablation_experiment(args):
              'voting':args.fixed_voting, 'rule_group':g} for g in args.rule_groups]
 
 
+def group_requests(requests, categorical=False):
+    """按模型和输入合并任务；类别数据不遍历无意义的分箱网格。"""
+    grouped = {}
+    for r in requests:
+        r = dict(r, bins=None) if categorical else r
+        model = config.MODELS[r['model']]
+        is_oeo = model['estimator']=='oeo'
+        key = (r['model'],r['bins'])
+        variants = grouped.setdefault(key,{})
+        vkey = (r['voting'],r['rule_group']) if is_oeo else ('baseline','baseline')
+        variant = variants.setdefault(vkey, {'voting':vkey[0], 'rule_group':vkey[1],
+            'rule_types':list(config.RULE_GROUPS[r['rule_group']]) if is_oeo else [], 'studies':[]})
+        if r['study'] not in variant['studies']:variant['studies'].append(r['study'])
+    return grouped
+
+
+def categorical_provenance(provenance):
+    """只给新增类别任务记录新增依赖，保留旧数值任务的来源文件集合。"""
+    from copy import deepcopy
+    result = deepcopy(provenance)
+    for relative in ('src/oeo_lab/preprocessing/categorical.py',
+                     'src/oeo_lab/experiments/classification/uci_data.py'):
+        value = hashlib.sha256((config.PROJECT_ROOT / relative).read_bytes()).hexdigest()
+        result.setdefault('sources', {})[relative] = value
+        result.setdefault('computation_sources', {})[relative] = value
+    from ..common.checkpoints import digest
+    result['source_hash'] = digest(result['sources'])
+    return result
+
+
 def build_tasks(args, provenance):
     """先合并三类实验，再按训练设置组任务；每个任务仅编码、训练一次。
 
@@ -81,30 +111,30 @@ def build_tasks(args, provenance):
     functions = {'comparison':model_comparison, 'sensitivity':binning_voting_experiment,
                  'ablation':rule_ablation_experiment}
     requests = [r for study in dict.fromkeys(args.experiments) for r in functions[study](args)]
-    grouped = {}
-    for r in requests:
-        model = config.MODELS[r['model']]
-        is_oeo = model['estimator']=='oeo'
-        key = (r['model'],r['bins'])
-        variants = grouped.setdefault(key,{})
-        vkey = (r['voting'],r['rule_group']) if is_oeo else ('baseline','baseline')
-        variant = variants.setdefault(vkey, {'voting':vkey[0], 'rule_group':vkey[1],
-            'rule_types':list(config.RULE_GROUPS[r['rule_group']]) if is_oeo else [], 'studies':[]})
-        if r['study'] not in variant['studies']:variant['studies'].append(r['study'])
     tasks=[]
     for name in dict.fromkeys(args.datasets):
-        path=config.DATA_ROOT/config.DATASETS[name]['path']
-        spec=dict(config.DATASETS[name],path=str(path),sha256=hashlib.sha256(path.read_bytes()).hexdigest())
-        X,y,labels=load_numeric_dataset(spec)
-        plan=make_splits(y,protocol='stratified',n_splits=args.folds,seeds=args.seeds)
-        print(f'{name}: samples={len(y)}, features={X.shape[1]}, classes={len(labels)}',flush=True)
+        dataset = config.DATASETS[name]
+        categorical = dataset.get('feature_kind', 'numerical') == 'categorical'
+        path=config.DATA_ROOT/dataset['path']
+        spec=dict(dataset,path=str(path),sha256=hashlib.sha256(path.read_bytes()).hexdigest())
+        if categorical:
+            from .uci_data import load_uci_dataset
+            X,y,labels=load_uci_dataset(spec)
+        else:
+            X,y,labels=load_numeric_dataset(spec)
+        folds = dataset.get('folds', args.folds)
+        plan=make_splits(y,protocol='stratified',n_splits=folds,seeds=args.seeds)
+        grouped = group_requests(requests, categorical)
+        source = categorical_provenance(provenance) if categorical else provenance
+        print(f'{name}: samples={len(y)}, features={X.shape[1]}, classes={len(labels)}, '
+              f'folds={folds}, encoding={"one-hot" if categorical else "binning + one-hot"}',flush=True)
         for split in plan['splits']:
             for (name_model,b),variants in grouped.items():
                 task={'experiment':'uci_classification_v2','name':name,'dataset':spec,
                       'split':split,'model_name':name_model,'model':config.MODELS[name_model],
                       'max_bins':b,'min_data_in_bin':config.MIN_DATA_IN_BIN,
                       'voting':list(dict.fromkeys(v['voting'] for v in variants.values())),
-                      'prediction_variants':list(variants.values()),'provenance':provenance}
+                      'prediction_variants':list(variants.values()),'provenance':source}
                 task['id']=task_id(task);tasks.append(task)
     return tasks
 

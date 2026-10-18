@@ -128,6 +128,9 @@ def build_models(random_seed=42, include_raw=None):
 def create_model(spec, seed):
     """按显式配置创建一个模型；缺失依赖报错，绝不静默跳过。"""
     name, params = spec['estimator'], dict(spec['params'])
+    if name == 'tabpfn_v2':
+        from .tabpfn_adapter import TabPFNV2
+        return TabPFNV2(random_state=seed, **params)
     if name == 'dummy':
         return DummyClassifier(**params)
     if name == 'decision_tree':
