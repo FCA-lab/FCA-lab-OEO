@@ -1,0 +1,56 @@
+# FCA-lab-OEO: scoped snapshot of the current D30 environment.
+# Read-only audit date: 2026-10-30.
+# Python: 3.13.14 (Anaconda); Linux x86_64, glibc 2.39.
+# Interpreter: /home/charles/miniconda3/envs/fca/bin/python
+# Installer observed: pip 26.1.1.
+#
+# Scope: classification and 3WOC experiments, baseline models, paper plotting,
+# tests, and their installed mandatory Python dependencies. This is not a
+# complete Conda/system lockfile or a lockfile for every historical run.
+# Native libraries, compiler/CUDA builds, and package hashes are not locked.
+# Versions were read from installed metadata; fresh installation is unverified.
+# Optional seaborn and TabPFN are not included in this snapshot.
+#
+# For a NEW environment only (not executed during this audit):
+#   python -m pip install -r requirements-reproduce.txt
+#   python -m pip install --no-deps --no-build-isolation -e .
+# The editable project itself is deliberately excluded from the pins below.
+
+# Core computation, preprocessing, evaluation and result files
+numpy==2.4.6
+pandas==3.0.3
+scikit-learn==1.9.0
+scipy==1.17.1
+joblib==1.5.3
+threadpoolctl==3.6.0
+openpyxl==3.1.5
+
+# Baselines and paper plotting
+xgboost==3.2.0
+lightgbm==4.6.0
+catboost==1.2.10
+matplotlib==3.11.2
+
+# Resource monitoring, tests and editable-build tools
+psutil==7.2.2
+pytest==9.1.1
+setuptools==82.0.1
+wheel==0.47.0
+
+# Installed mandatory transitive dependencies (Linux, Python 3.13)
+contourpy==1.4.0
+cycler==0.12.1
+et-xmlfile==2.0.0
+fonttools==4.66.1
+graphviz==0.21
+iniconfig==2.3.0
+kiwisolver==1.5.1
+narwhals==2.22.1
+packaging==26.0
+pillow==12.3.0
+plotly==7.1.0
+pluggy==1.6.0
+pygments==2.20.0
+pyparsing==3.3.3
+python-dateutil==2.9.0.post0
+six==1.17.0

@@ -24,27 +24,30 @@ Historical tasks record Python 3.13.14; detailed versions are in the
 | Core | NumPy, pandas, scikit-learn, SciPy, joblib, threadpoolctl, openpyxl | Algorithms, preprocessing, evaluation and Excel results. |
 | `plot` extra | Matplotlib | Generate paper figures. |
 | `boost` extra | XGBoost, LightGBM | Baseline classifiers. |
-| Additional full-grid dependency | CatBoost | BABD baseline; currently installed separately. |
+| Additional full-grid dependency | CatBoost | BABD baseline; included in the version snapshot. |
 | `test` extra | pytest | Run implementation tests. |
 
-Create and activate a dedicated environment, then install the project:
+Create a new environment, install the recorded dependencies, then install the project:
 
 ```sh
 # From the checked-out FCA-lab-OEO repository root:
 conda create -n fca-oeo python=3.13 -y
 conda activate fca-oeo
-python -m pip install -e '.[plot,boost,test]'
-python -m pip install catboost
+python -m pip install -r requirements-reproduce.txt
+python -m pip install --no-deps --no-build-isolation -e .
 
 # Verify that the active interpreter can import the required dependencies.
 python -c "import sys, numpy, pandas, sklearn, scipy, joblib, threadpoolctl, openpyxl, matplotlib, xgboost, lightgbm, catboost, pytest; print(sys.executable)"
 ```
 
-On D30, the existing environment can instead be activated with `conda activate fca`
-from `/home/charles/projects/FCA-lab-OEO`. Use the activated interpreter for every
-command. The install recipe above is not a historical environment lockfile;
-dependencies are currently unpinned, and clean-environment installation remains
-to be validated for the public release.
+[requirements-reproduce.txt](requirements-reproduce.txt) records 31 package versions
+from the current D30 `fca` environment, audited on 2026-10-30 with Python 3.13.14
+on Linux x86_64. It covers experiments, plotting, tests and their Python dependencies;
+it is not a complete system lockfile or a record of every historical experiment
+environment. Consult the reproduction guide and checkpoint metadata for historical
+runs. Installation in a fresh environment remains unverified. The commands above
+are intended for a new environment; the existing D30 environment can be activated
+with `conda activate fca` without reinstalling packages.
 
 ## 2. Prepare the data
 
@@ -85,8 +88,11 @@ Prepare environment and input datasets
 ```
 
 The supported source-checkout entry is **`run_experiment.py`**, which dispatches
-to the selected experiment module. After installation, `oeo-classification` dispatches to the same unified launcher.
-Reinstall the editable package after updating this checkout to refresh the console entry.
+to the selected experiment module. The installed command `oeo-classification` is
+declared in `[project.scripts]` in `pyproject.toml` and generated automatically by
+the installation tool. It calls `oeo_lab.experiments.cli.main()`, the same unified
+entry used by `run_experiment.py`, with the same arguments. Examples below use only
+`run_experiment.py`; no separate experiment workflow is required.
 
 ```sh
 python run_experiment.py --help
