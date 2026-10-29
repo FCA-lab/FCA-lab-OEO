@@ -37,34 +37,6 @@ def curve_data(frame, x, y, series):
     return frame.groupby([series, x], dropna=False)[y].agg(mean='mean', std='std', n='count').reset_index()
 
 
-def candidate_data(frame):
-    """从已有计数精确恢复三组分布，不能据均值推断逐大小直方图。"""
-    validate_dimensions(frame, set())
-    rows = []
-    for _, r in frame.iterrows():
-        counts = [r.n_classified, r.partial_count, r.n_test-r.n_classified-r.partial_count]
-        hits = [r.n_correct, r.partial_hits, r.candidate_hits-r.n_correct-r.partial_hits]
-        for label, count, hit in zip(['Unique class','Partial set','All classes'], counts, hits):
-            if not 0 <= hit <= count or r.n_test <= 0:
-                raise ValueError('Inconsistent candidate counts')
-            rows.append(dict(category=label, hit=hit/r.n_test, miss=(count-hit)/r.n_test))
-    # 每个种子先归一化，再等权平均，与 per_seed 统计口径一致。
-    return pd.DataFrame(rows).groupby('category', sort=False)[['hit','miss']].mean().reset_index()
-
-
-def ablation_data(frame, metric, reference):
-    validate_dimensions(frame, {'dataset','rule_group'})
-    rows = []
-    for dataset, group in frame.groupby('dataset', sort=False):
-        pivot = group.pivot(index='seed', columns='rule_group', values=metric)
-        if reference not in pivot or pivot.isna().any().any():
-            raise ValueError('Missing reference or unpaired ablation measurements')
-        delta = pivot.subtract(pivot[reference], axis=0).drop(columns=reference)
-        for variant in delta:
-            rows.append(dict(dataset=dataset, rule_group=variant, delta=delta[variant].mean()))
-    return pd.DataFrame(rows).pivot(index='dataset',columns='rule_group',values='delta')
-
-
 def comparison_grid_data(frame, datasets, models, bins, metrics):
     """保留模型/数据集分面；每个网格点要求完整且一致的种子集合。"""
     rows = []

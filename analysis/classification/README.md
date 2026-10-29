@@ -1,26 +1,24 @@
-# 分类实验绘图
+# 论文实验绘图
 
-在工程根目录运行：
+本模块仅保留最终论文引用的六幅实验图，共用一个入口，不重新训练模型。
 
-```bash
-conda activate fca
-python analysis/classification/plot_all.py
-```
+| 图名（PDF、PNG、CSV 共用文件名） | 绘图函数 |
+|---|---|
+| `uci_model_comparison_grid` | `plot_comparison_grid` |
+| `uci_rule_ablation_combined` | `plot_ablation_combined` |
+| `uci_voting_model_comparison` | `plot_voting_comparison` |
+| `uci_candidate_set_sizes` | `plot_candidate_sizes` |
+| `babd_behavior_grid` | `plot_babd_behavior` |
+| `babd_runtime_comparison` | `plot_babd_timing` |
 
-默认读取已完成的 UCI 三类实验、BABD balanced 工作簿，输出到
-`results/figures/classification/`。可指定 `--uci 文件 --babd 文件 --output 目录 --dpi 300`。
+在工程根目录执行 `python analysis/classification/plot_all.py`，默认生成以上六幅图。可用 `--only 图名 ...` 选择子集，`--uci`、`--babd`、`--babd-imbalanced` 指定工作簿，`--output` 指定输出目录，`--dpi` 设置分辨率。默认输出位置为 `results/figures/classification/`；同名文件会被覆盖。
 
-所有论文图设置位于 `plot_all.main()`：数据源、种子、固定分箱、指标、过滤条件、标题、坐标轴名称、字号、尺寸、配色、输出格式和分辨率。
-新增论文图只需在 jobs 中添加配置。非均衡 BABD 结果可用新 job 明确指定对应文件、dataset 和 protocol，不与均衡数据混合。
+- `plot_all.py`：配置数据筛选、种子、图形及输出，生成运行清单。
+- `result_data.py`：读取已有 `per_seed` 结果，检查完整性并整理绘图数据。
+- `figures.py`：六个绘图函数，不读取实验工作簿。
 
-- `figures.py`：性能曲线、候选集合分布、消融差值热图、计算代价四个公共函数。
-- `result_data.py`：直接消费实验已有 per_seed 汇总，不重新计算折指标，不修改实验代码。
-- `plot_all.py`：组装并导出全部配置的图。
+均值与样本标准差按随机种子计算，误差棒不是置信区间。规则消融展示各配置的准确率与覆盖率，不展示与完整规则集的差值。候选集图使用已记录的候选计数；BABD 的候选集大小和真实类别保留率统计全部测试对象。时间图排除预处理，拟合时间按折平均（如适用），预测时间按每 1,000 个测试对象归一化。
 
-每幅图保存 PDF、PNG 和实际绘图 CSV；manifest.json 记录筛选参数、源文件 SHA256、版本和成功/跳过状态。缺失文件、未完成种子/折或未固定的混合设置会明确报错，入口继续处理其它图，最终以非零退出码提示未全部生成。检查 manifest 后再将图用于论文；不要把旧输出文件当作本轮成功结果。
+每幅图导出 PDF、PNG 和同名 CSV；完整运行保存 `manifest.json`，子集运行保存 `manifest_selected.json`。检查运行清单中的成功/跳过状态，不把旧文件误认成本次生成结果。详细参数及版本对应见[复现说明](../../docs/classification/reproduction.md)与[论文对应清单](../../docs/classification/paper_artifacts.md)。
 
-曲线为种子等权均值，误差线为样本 SD，不是置信区间；种子测试集可能重叠。消融先按种子配对求差，再平均，不根据测试成绩挑选分箱参数。默认 bins=20 为配置值，可在 main 修改。
-
-候选集合图使用现有计数恢复“唯一类别／部分候选／全部类别”，不是逐大小直方图。现有结果未存储逐大小命中数，不能从平均大小推断。公共绘图函数可以接受后续提供的精确大小分布。
-
-时间使用 per_seed 的 fit_seconds 和 predict_seconds（同一种子内各折的总和），不包含模型加载和任务排队时间；各投票共享同一次 fit，不是独立训练。正式解释计时需考虑并行负荷。
+未被论文采用的试选图入口和专用函数已移除，原实现可在 Git 提交 `1757a97` 中查看。既有图片、CSV、实验结果及检查点未删除。论文中的概念结构示意图不由本模块生成。
