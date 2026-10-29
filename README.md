@@ -1,19 +1,33 @@
 # FCA-lab-OEO
 
-Private development preparation for two related studies: 3WOC concept acquisition and OEO-based classification. Public release is planned after acceptance of the classification paper.
+Research implementation for **Classification via Directly Extracted Necessary-Attribute Rules** and related 3WOC concept-construction work.
 
-## Status
-This is a structural migration of the existing implementation, not a validated implementation of the revised classification manuscript. The classifier still uses the legacy A2, forced-decision and voting behavior. Do not use it for the new paper experiments yet.
+RC-OEO extracts a specified family of OEO necessary-attribute classification rules without constructing the complete concept lattice. Supporting and excluding rule evidence is used to assign a unique label or retain candidate classes. Completeness concerns the specified rule family; candidate-set inclusion on unseen objects is an empirical result, not a guarantee.
 
-## Setup
-```bash
-python -m pip install -e ".[test]"
-python -m pytest
-python -m oeo_lab.experiments.classification.run --help
+## Paper artifacts and reproduction
+
+- [Reproduction guide](docs/classification/reproduction.md): data, protocols, metrics and commands.
+- [Paper artifact and version map](docs/classification/paper_artifacts.md): experiments, tables, figures, configurations, workbooks and historical provenance.
+- [Launcher reference](docs/classification/experiment_entry.md): optional interactive launcher and watchdog behavior. Its example commands are not the paper's frozen configuration.
+
+The completed paper results cover rule completeness, UCI classification, BABD balanced/imbalanced classification, and Elliptic transaction classification. Earlier exploratory Bitcoin/entity experiments and extended grids are not part of the paper artifact set.
+
+## Installation
+
+From the repository root, in a dedicated Python environment:
+
+```sh
+python -m pip install -e '.[plot,boost]'
 ```
 
-`fca_core` contains shared foundations; `oeo_lab` contains algorithms, preprocessing and experiments. Construction algorithms retain their original computational logic. Only obsolete unused imports are removed.
+The full BABD model grid additionally requires `catboost`. Dependencies in `pyproject.toml` are not version-pinned; installation alone does not recreate the historical environment. Consult task provenance and the reproduction guide before claiming an exact reproduction.
 
-Data are not bundled. Set `OEO_DATA_ROOT` to a data root containing `raw/bitcoin/getFeatures.csv`, or pass `--data` explicitly. See `data/README.md` and the reproduction documents before launching experiments.
+Data are not bundled. Put the documented inputs under `data/`, or set `OEO_DATA_ROOT` to an equivalent data root. Do not substitute an unprocessed BABD download for the cleaned input used in the paper.
 
-No GitHub upload or public release has been performed by this migration.
+## Status and release boundary
+
+Documentation checked on 2026-10-29. The inspected checkout has HEAD `38d219c` plus local launcher and plotting changes. It is **not** a single frozen source version for every historical result. Task-level source fingerprints and checkpoint reuse records identify the original executions; see the version map.
+
+Public code release is planned upon acceptance. No public archival release is designated by this README. Before release, a fixed source snapshot, dependency specification, input preparation instructions and the selected result/figure artifacts still need to be packaged. The documentation audit did not rerun experiments or validate installation in a clean environment.
+
+`results/` and raw data are ignored by Git. Uploading the source repository alone will not include the paper's workbooks, checkpoints or figures.

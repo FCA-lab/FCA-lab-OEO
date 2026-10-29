@@ -8,18 +8,61 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import pandas as pd
-from result_data import select_results, curve_data, candidate_data, ablation_data
-from figures import (plot_performance_curves, plot_candidate_distribution,
-                     plot_ablation_heatmap, plot_computational_cost, plot_training_profile)
+from result_data import babd_timing_data, babd_behavior_data, select_results, curve_data, candidate_data, ablation_data, comparison_grid_data, ablation_grid_data, voting_comparison_data, candidate_size_data
+from figures import (plot_babd_timing, plot_babd_behavior, plot_performance_curves, plot_candidate_distribution,
+                     plot_ablation_heatmap, plot_computational_cost, plot_training_profile,
+                     plot_comparison_grid, plot_ablation_grid, plot_ablation_dots, plot_ablation_tradeoff, plot_ablation_detail, plot_ablation_binary, plot_ablation_combined, plot_voting_comparison, plot_candidate_sizes)
 
 
 def generate(job, settings):
     frame = select_results(job['file'], job['filters'], settings['seeds'])
+    if job['kind'] in ('babd_behavior','babd_timing'):
+        frame['experiment']='balanced'
+        other=select_results(job['imbalanced_file'],job['filters'],settings['seeds'])
+        other['experiment']='imbalanced'
+        frame=pd.concat([frame,other],ignore_index=True)
     common = {k:job[k] for k in ('title','xlabel','ylabel')}
     if job['kind'] in ('performance','cost'):
         common['title'] += f"\nMean ± SD across {len(settings['seeds'])} seeds"
     common['figsize'] = settings['heatmap_size'] if job['kind']=='ablation' else settings['figure_size']
-    if job['kind']=='training_profile':
+    if job['kind']=='babd_behavior':
+        data=babd_behavior_data(frame)
+        fig=plot_babd_behavior(data)
+    elif job['kind']=='babd_timing':
+        data=babd_timing_data(frame)
+        fig=plot_babd_timing(data)
+    elif job['kind']=='comparison_grid':
+        data=comparison_grid_data(frame, job['datasets'], job['models'], job['bins'], job['metrics'])
+        fig=plot_comparison_grid(data,datasets=job['datasets'],models=job['models'],
+            metrics=job['metrics'],figsize=(7.2,4.8),colors=settings['colors'],
+            markers=settings['markers'],ylim=job['ylim'])
+    elif job['kind']=='candidate_sizes':
+        data=candidate_size_data(frame,job['datasets'],settings['seeds'])
+        fig=plot_candidate_sizes(data,datasets=job['datasets'])
+    elif job['kind']=='voting_comparison':
+        data=voting_comparison_data(frame,job['datasets'],job['bins'],job['metrics'],settings['seeds'])
+        fig=plot_voting_comparison(data,datasets=job['datasets'])
+    elif job['kind'] in ('ablation_grid', 'ablation_dots', 'ablation_tradeoff', 'ablation_detail', 'ablation_binary', 'ablation_combined'):
+        data=ablation_grid_data(frame, job['datasets'], job['rule_groups'],
+            job['metrics'], settings['seeds'], job['numerical_bins'])
+        if job['kind']=='ablation_grid':
+            fig=plot_ablation_grid(data, datasets=job['datasets'], rule_groups=job['rule_groups'],
+                metrics=job['metrics'], cmap=settings['heatmap_cmap'])
+        elif job['kind']=='ablation_dots':
+            fig=plot_ablation_dots(data, datasets=job['datasets'], rule_groups=job['rule_groups'],
+                metrics=job['metrics'])
+        elif job['kind']=='ablation_tradeoff':
+            fig=plot_ablation_tradeoff(data, datasets=job['datasets'], rule_groups=job['rule_groups'])
+        elif job['kind']=='ablation_detail':
+            fig=plot_ablation_detail(data, datasets=job['datasets'], rule_groups=job['rule_groups'],
+                metrics=job['metrics'])
+        elif job['kind']=='ablation_binary':
+            fig=plot_ablation_binary(data, datasets=job['datasets'], rule_groups=job['rule_groups'],
+                metrics=job['metrics'])
+        else:
+            fig=plot_ablation_combined(data, datasets=job['datasets'], rule_groups=job['rule_groups'],
+                metrics=job['metrics'])
+    elif job['kind']=='training_profile':
         pieces=[]
         for panel in job['panels']:
             for metric in panel['metrics']:
@@ -80,13 +123,59 @@ def main(argv=None):
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--uci',type=Path,default=files['uci'])
     parser.add_argument('--babd',type=Path,default=files['babd'])
+    parser.add_argument('--babd-imbalanced',type=Path,default=root/'results/classification/babd_imbalanced_results.xlsx')
     parser.add_argument('--output',type=Path,default=settings['output'])
     parser.add_argument('--dpi',type=int,default=settings['dpi'])
+    parser.add_argument('--only',nargs='+',help='Generate only these named figures; no experiments are run')
     args=parser.parse_args(argv)
     if args.dpi<=0:parser.error('dpi must be positive')
     files.update(uci=args.uci,babd=args.babd);settings.update(output=args.output,dpi=args.dpi)
     plt.rcParams.update({'font.size':settings['font_size'],'pdf.fonttype':42,'ps.fonttype':42})
-    jobs=[]
+    jobs=[dict(name='uci_model_comparison_grid',kind='comparison_grid',file=files['uci'],
+        filters=dict(study='comparison',dataset=datasets,
+            model=['decision_tree','random_forest_context','xgboost_context','rc-oeo'],
+            voting=['baseline','uniform']),
+        datasets=dict(iris='Iris',wine='Wine',wdbc='WDBC'),
+        models={'decision_tree':'DT','random_forest_context':'RF',
+                'xgboost_context':'XGBoost','rc-oeo':r'RC-OEO (uniform voting, $RS_{DK}$)'},
+        bins=list(range(20,101,10)),
+        metrics={'classified_accuracy':'Classified accuracy','macro_precision':'Macro-Precision'},
+        ylim=(50,103),title='UCI model comparison',xlabel='Maximum number of bins',ylabel='')]
+
+    jobs.append(dict(name='uci_rule_ablation_grid',kind='ablation_grid',file=files['uci'],
+        filters=dict(study='ablation',model='rc-oeo',voting='uniform',
+            dataset=['iris','wine','lenses','wdbc','balloons']),
+        datasets=dict(iris='Iris',wine='Wine',lenses='Lenses',wdbc='WDBC',balloons='Balloons'),
+        rule_groups={'all':'All', 'support_only':r'$A_1,A_2$',
+            'exclusion_only':r'$B_1,B_2$', 'without_A1':r'All $\setminus\{A_1\}$',
+            'without_A2':r'All $\setminus\{A_2\}$', 'without_B1':r'All $\setminus\{B_1\}$',
+            'without_B2':r'All $\setminus\{B_2\}$'},
+        metrics={'classified_accuracy':'Classified accuracy','coverage':'Coverage'},
+        numerical_bins=20,title='UCI rule ablation',xlabel='Rule combination',ylabel='Dataset'))
+
+    jobs.append(dict(jobs[-1], name='uci_rule_ablation_dots', kind='ablation_dots'))
+    jobs.append(dict(jobs[-1], name='uci_rule_ablation_tradeoff', kind='ablation_tradeoff'))
+    ablation_template=jobs[-1]
+    jobs.append(dict(name='uci_candidate_set_sizes',kind='candidate_sizes',file=files['uci'],
+        filters=dict(study='comparison',dataset=['iris','wine','lenses'],model='rc-oeo',
+                     rule_group='all',voting='uniform',max_bins=[20,float('nan')]),
+        datasets=dict(iris='Iris',wine='Wine',lenses='Lenses'),title='',xlabel='',ylabel=''))
+    jobs.append(dict(name='uci_voting_model_comparison',kind='voting_comparison',file=files['uci'],
+        filters=dict(study=['comparison','sensitivity'],dataset=['iris','wine','wdbc'],
+                     model=['decision_tree','random_forest_context','xgboost_context','rc-oeo']),
+        datasets=dict(iris='Iris',wine='Wine',wdbc='WDBC'),bins=list(range(20,101,10)),
+        metrics=['classified_accuracy','coverage'],title='',xlabel='',ylabel=''))
+    jobs.append(dict(ablation_template,name='uci_rule_ablation_combined',kind='ablation_combined'))
+    jobs.append(dict(ablation_template,name='uci_rule_ablation_binary',kind='ablation_binary',
+        datasets={'wdbc':'WDBC','balloons':'Balloons'},
+        filters=dict(ablation_template['filters'],dataset=['wdbc','balloons'])))
+    for dataset,label in [('iris','Iris'),('wine','Wine'),('lenses','Lenses'),
+                          ('wdbc','WDBC'),('balloons','Balloons')]:
+        jobs.append(dict(ablation_template,name=f'uci_rule_ablation_{dataset}_detail',
+            kind='ablation_detail',datasets={dataset:label},
+            filters=dict(ablation_template['filters'],dataset=[dataset])))
+
+
     for dataset in datasets:
         for metric,label,limits in metrics:
             jobs.append(dict(name=f'uci_{dataset}_{metric}',kind='performance',file=files['uci'],
@@ -129,6 +218,18 @@ def main(argv=None):
         panels=profile_panels,xlabel='Training objects',ylabel='',
         title=f'RC-OEO: training size, rules and decisions (BABD balanced; bins={babd_bins})'
               +f"\nMean ± SD across {len(settings['seeds'])} seeds; encoding fitted at each training size"))
+    jobs.append(dict(name='babd_behavior_grid',kind='babd_behavior',file=files['babd'],
+        imbalanced_file=args.babd_imbalanced,
+        filters=dict(model='rc-oeo',max_bins=20,voting='uniform'),
+        title='',xlabel='',ylabel=''))
+    jobs.append(dict(name='babd_runtime_comparison',kind='babd_timing',file=files['babd'],
+        imbalanced_file=args.babd_imbalanced,
+        filters=dict(model=['rc-oeo','random_forest','xgboost'],max_bins=20),
+        title='',xlabel='',ylabel=''))
+    if args.only:
+        unknown=set(args.only)-{j['name'] for j in jobs}
+        if unknown: parser.error(f'Unknown figure names: {sorted(unknown)}')
+        jobs=[j for j in jobs if j['name'] in args.only]
     settings['output'].mkdir(parents=True,exist_ok=True)
     manifest=dict(settings=settings, versions=dict(python=platform.python_version(),
         pandas=pd.__version__,matplotlib=matplotlib.__version__),figures=[],
@@ -149,7 +250,7 @@ def main(argv=None):
         except (ValueError,KeyError,FileNotFoundError) as error:
             record.update(status='skipped',reason=str(error));print('[跳过]',job['name'],error)
         manifest['figures'].append(record)
-    (settings['output']/'manifest.json').write_text(json.dumps(manifest,indent=2,default=str))
+    (settings['output']/('manifest_selected.json' if args.only else 'manifest.json')).write_text(json.dumps(manifest,indent=2,default=str))
     return 1 if any(r['status']!='ok' for r in manifest['figures']) else 0
 
 
