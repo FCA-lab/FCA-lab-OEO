@@ -98,3 +98,20 @@ Thus reused rules, predictions as represented by their stored result payloads, a
 6. Add the chosen code license and, when actually released, the fixed repository/archive URL. Do not describe a planned public release as already available.
 
 No computation code, configuration, result workbook or checkpoint was changed by this documentation update; no experiments were rerun and no files were uploaded to GitHub.
+
+
+## Maintenance update: retired evaluation chain (2026-10-30)
+
+The legacy `run_all_experiments_parallel` / `run_one_seed` / `build_models`
+execution chain and its exclusive sampling/configuration helpers were removed.
+The retired module now contains only a migration message. The installed
+`oeo-classification` command points to the unified `experiments.cli:main` entry.
+Current classification evaluation, aggregation, loading and model-factory
+function bodies were preserved. Classification algorithms, 3WOC algorithms and
+construction experiments, shared scheduling and checkpoint handling were unchanged.
+
+D30 validation: all 111 existing tests passed, using small fixtures and temporary
+outputs rather than rerunning paper experiments. Historical checkpoints and
+source aliases were not rewritten. Source fingerprints change after cleanup;
+this maintenance version must not be presented as the original execution snapshot.
+The earlier dated audit tables above remain historical provenance records.

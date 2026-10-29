@@ -72,7 +72,7 @@ PYTHONPATH=src python -m oeo_lab.experiments.classification.elliptic_experiment 
 
 These commands use each current entry point's remaining defaults, as described in the protocol table. In particular, UCI `main` overrides the legacy grid in `uci_config.py`; completeness has script-level defaults that are overridden explicitly above. Preserve the release snapshot rather than relying on defaults in a future revision. `--dry-run` still loads/validates inputs and constructs tasks; it is not a file-inventory command. Do not run concurrent writers against the same results directory.
 
-The optional root launcher defaults to an external watchdog; use `--no-watch` if it is unavailable. The direct module commands above do not require the watchdog. The legacy `oeo-classification` console entry is not the unified paper experiment launcher.
+The optional root launcher defaults to an external watchdog; use `--no-watch` if it is unavailable. The direct module commands above do not require the watchdog. The `oeo-classification` console entry now uses the unified launcher; reinstall the package after updating the entry-point configuration.
 
 ## 5. Regenerate figures without training
 

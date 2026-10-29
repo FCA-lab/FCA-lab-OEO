@@ -15,7 +15,7 @@ plot = ["matplotlib"]
 boost = ["xgboost", "lightgbm"]
 
 [project.scripts]
-oeo-classification = "oeo_lab.experiments.classification.run:main"
+oeo-classification = "oeo_lab.experiments.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
