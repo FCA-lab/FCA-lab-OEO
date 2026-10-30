@@ -2,7 +2,8 @@
 
 Please cite the paper corresponding to the functionality used. Cite both when
 using both the classification and 3WOC construction methods. These are academic
-citation requests, not additional restrictions on the MIT license.
+citation requests and do not expand the limited review permission in LICENSE.
+A separate MIT-licensed public release is planned after acceptance.
 
 ## Classification
 

@@ -1,5 +1,8 @@
 # FCA-lab-OEO
 
+**Confidential review version.** Use is limited to authorized manuscript review
+under [LICENSE](LICENSE). A separate MIT release is planned after acceptance.
+
 Code for **Classification via Directly Extracted Necessary-Attribute Rules**.
 RC-OEO directly extracts necessary-attribute classification rules from OEO-concepts
 and combines supporting and excluding evidence to assign a unique label or retain
@@ -247,7 +250,7 @@ repository contains code, configurations and instructions; result workbooks and
 figures will be provided as optional archived artifacts. Links will be added when
 available. Raw data and results are ignored by Git and are not included simply by
 uploading this repository. The dependency snapshot and validated BABD preparation workflow are included.
-MIT licensing and citation files have been prepared. Copyright in the project's
+Review-stage licensing and citation files have been prepared. Copyright in the project's
 own code is held by Zhuo Zhang and Yuhao Jin; remaining attribution details are
 listed in the third-party notices. A fixed public release,
 remaining dataset license/version details and final result packaging are pending.
@@ -257,10 +260,14 @@ single original execution version for every reported result.
 ## 8. License, attribution and citation
 
 Copyright in the project's own code is held by the code contributors Zhuo Zhang
-and Yuhao Jin, with no other ownership agreements. This code is offered under the
-[MIT License](LICENSE). Third-party material retains its original copyright and
-license terms; see [third-party notices and contributor roles](THIRD_PARTY_NOTICES.md).
-The project license does not cover external datasets or weights.
+and Yuhao Jin, with no other ownership agreements. This version is provided only
+for authorized confidential peer review under the [limited review permission](LICENSE);
+it is not an open-source release. A separate MIT-licensed version is planned after
+acceptance. Third-party material retains its original copyright and license terms;
+see [third-party notices and contributor roles](THIRD_PARTY_NOTICES.md).
+The review permission does not restrict rights independently granted by those
+third-party licenses and does not cover external datasets or weights.
+See [the two-stage release procedure](docs/licensing_stages.md) for the transition.
 
 See [citation instructions](CITATION.md) for the classification manuscript and the
 published 3WOC paper. Cite the relevant paper(s) and record the software commit.

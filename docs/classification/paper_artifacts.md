@@ -95,7 +95,7 @@ Thus reused rules, predictions as represented by their stored result payloads, a
 3. Available: the [BABD preparation guide](babd_preparation.md), script and same-environment validation. Dataset version/license details still need final confirmation.
 4. Package the five workbooks and selected final figures/CSVs/manifests; decide whether large checkpoints belong in a separate archive. Preserve the complete reuse graph if checkpoint auditability is claimed.
 5. Record final manuscript table selections and artifact checksums. Keep old exploratory outputs out of the paper package.
-6. Add the chosen code license and, when actually released, the fixed repository/archive URL. Do not describe a planned public release as already available.
+6. The current package uses limited confidential-review permission. After acceptance, explicitly issue the planned MIT release and add its fixed repository/archive URL; follow `docs/licensing_stages.md`. Do not describe a planned release as already available.
 
 No computation code, configuration, result workbook or checkpoint was changed by this documentation update; no experiments were rerun and no files were uploaded to GitHub.
 
