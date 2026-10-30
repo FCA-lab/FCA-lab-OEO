@@ -31,7 +31,7 @@ def test_small_class_and_collapsed_grid():
         e.nested_fraction_splits([0]*3+[1]*3,[11],[.2,.4],.3)
 
 
-def test_defaults_and_scheduling_identity():
+def test_defaults_and_scheduling_identity(synthetic_uci_data):
     a=e.main(['--dry-run'])
     b=e.main(['--dry-run','--n-jobs','3'])
     assert len(a)==135
@@ -39,7 +39,7 @@ def test_defaults_and_scheduling_identity():
     assert {t['max_bins'] for t in a}=={5,8,10}
 
 
-def test_result_pipeline_and_resume_in_process(tmp_path, monkeypatch):
+def test_result_pipeline_and_resume_in_process(tmp_path, monkeypatch, synthetic_uci_data):
     # 单元测试用进程内适配器执行两个微型任务，不测试真实调度准入。
     # 公共内存阈值不变；正式入口仍完整调用公共调度器。
     from oeo_lab.experiments.common import runner

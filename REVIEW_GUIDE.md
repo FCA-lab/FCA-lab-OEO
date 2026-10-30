@@ -26,8 +26,8 @@ The older `predictWithRules_2` method is not the main prediction procedure.
 
 From the extracted repository root, follow the environment instructions in
 [README](README.md). `requirements-reproduce.txt` records the current D30 package
-versions; it is not a lockfile for every historical experiment. Installation from
-an extracted review package in a fresh environment has **not yet been verified**.
+versions; it is not a lockfile for every historical experiment. Installation from an extracted review source package was verified on
+2026-10-30 in an isolated Linux Python 3.13.14 environment.
 Use a separate environment rather than changing an existing research environment.
 
 ## 3. Inspect interfaces and run implementation tests
@@ -50,9 +50,9 @@ rerun the full paper experiments:
 python -m pytest -q
 ```
 
-The existing 111-test suite and the five subsequently added BABD preparation guard
-tests passed on D30 in separate validation runs. This is not a claim of a completed
-fresh-environment review-package test. `--dry-run` builds task lists and can read
+All 116 tests passed in the isolated review-package environment. Workflow tests
+generate temporary synthetic inputs; no downloaded research datasets are needed.
+This verifies implementation tests, not reproduction of the full paper results. `--dry-run` builds task lists and can read
 real input data; it is not a data-free alternative to `--help`.
 
 ## 4. Inspect results or reproduce selected work

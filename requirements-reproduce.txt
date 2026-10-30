@@ -8,7 +8,9 @@
 # tests, and their installed mandatory Python dependencies. This is not a
 # complete Conda/system lockfile or a lockfile for every historical run.
 # Native libraries, compiler/CUDA builds, and package hashes are not locked.
-# Versions were read from installed metadata; fresh installation is unverified.
+# Versions were read from installed metadata; fresh isolated installation was
+# verified on Linux/Python 3.13.14 on 2026-10-30. Platform-dependent transitive
+# packages may also be resolved by pip; this is not a full lockfile.
 # Optional seaborn and TabPFN are not included in this snapshot.
 #
 # For a NEW environment only (not executed during this audit):

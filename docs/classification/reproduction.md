@@ -18,6 +18,29 @@ All paths below are relative to `OEO_DATA_ROOT` (default: repository `data/`).
 
 Dataset download/version/license information must accompany the public package. Do not redistribute inputs merely because they were publicly downloadable.
 
+
+### UCI classification inputs
+
+Download the following official UCI archives and extract the indicated files.
+Paths below are relative to `OEO_DATA_ROOT` (default: `data/`). Download links
+and archive members were checked on 2026-10-30; this check does not establish
+byte identity with the historical experimental inputs. Consult checkpoint hashes
+when matching the published results.
+
+| Dataset | Official archive | Required destination |
+|---|---|---|
+| Iris | [ZIP](https://archive.ics.uci.edu/static/public/53/iris.zip) | `raw/uci/iris/iris.data` |
+| Wine | [ZIP](https://archive.ics.uci.edu/static/public/109/wine.zip) | `raw/uci/wine/wine.data` |
+| WDBC | [ZIP](https://archive.ics.uci.edu/static/public/17/breast+cancer+wisconsin+diagnostic.zip) | `raw/uci/wdbc/wdbc.data` |
+| Balloons | [ZIP](https://archive.ics.uci.edu/static/public/13/balloons.zip) | `raw/uci/balloons/adult+stretch.data` |
+| Lenses | [ZIP](https://archive.ics.uci.edu/static/public/58/lenses.zip) | `raw/uci/lenses/lenses.data` |
+
+Use `iris.data`, not `bezdekIris.data`; use only `adult+stretch.data` for
+Balloons, not the other variants in its archive. Preserve the original delimiters
+and do not add headers. These are experiment inputs, not requirements for the
+synthetic-fixture test suite. This list covers the five UCI classification datasets;
+it does not supply the separate COVID19 completeness input.
+
 ## 2. Paper protocols
 
 All predictive preprocessing is fitted on training objects only. Models within an experimental condition share sample splits. Numerical features use the project's dynamic binning implementation followed by one-hot encoding; categorical features use one-hot encoding. `max_bins` is an upper bound, not the actual number of intervals. The implementation uses `MIN_DATA_IN_BIN=3` (samples, not bins). Decision labels and identifiers are excluded from condition features.

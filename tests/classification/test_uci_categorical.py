@@ -20,7 +20,7 @@ def test_encoding_shared_and_unknown_test_category():
     assert len(encoder.columns_) == 4  # 测试集未见类别不新增训练属性。
 
 
-def test_categorical_tasks_no_bins_and_dataset_folds():
+def test_categorical_tasks_no_bins_and_dataset_folds(synthetic_uci_data):
     args = u.parse_args(['--datasets','balloons','lenses','--models','rc-oeo',
                         'decision_tree','--seeds','11','--max-bins','20','50'])
     tasks = u.build_tasks(args, {'test': True})

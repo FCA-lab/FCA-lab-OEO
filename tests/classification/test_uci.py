@@ -44,7 +44,7 @@ def test_training_only_fit_shared_once_and_test_outliers(tmp_path):
         assert row['defer_no_evidence']+row['defer_tie']==row['n_deferred']
 
 
-def test_all_models_same_split_and_raw_not_repeated():
+def test_all_models_same_split_and_raw_not_repeated(synthetic_uci_data):
     args=u.parse_args(['--experiments','comparison','--datasets','iris','--seeds','11','--folds','3','--max-bins','3','5'])
     tasks=u.build_tasks(args,{'test':True})
     assert len(tasks)==36  # 3 folds * (4 raw + 4 context * 2 bins)
@@ -55,7 +55,7 @@ def test_all_models_same_split_and_raw_not_repeated():
         assert sum(t['model_name']=='rc-oeo' for t in rows)==2
 
 
-def test_three_studies_share_fit_and_prediction(tmp_path):
+def test_three_studies_share_fit_and_prediction(tmp_path, synthetic_uci_data):
     """三类实验的共同组合仅训练/预测一次，并保留各自报表归属。"""
     args=u.parse_args(['--datasets','iris','--models','rc-oeo','--seeds','11',
                       '--folds','3','--max-bins','3','--ablation-bins','3'])
@@ -97,7 +97,7 @@ def test_candidate_metrics():
     assert e.evaluate_candidates([0],[(0,)],3)['partial_hit_rate'] is None
 
 
-def test_report_groups_and_pending_folds(tmp_path):
+def test_report_groups_and_pending_folds(tmp_path, synthetic_uci_data):
     from oeo_lab.experiments.classification.runner import summarize_classification
     from oeo_lab.experiments.common.checkpoints import save
     import pandas as pd
@@ -112,7 +112,7 @@ def test_report_groups_and_pending_folds(tmp_path):
     assert len(summary)==11 and summary.complete.all()
     assert set(summary.study)=={'comparison','sensitivity','ablation'}
     seed=pd.read_excel(out,sheet_name='per_seed')
-    assert (seed.n_test==150).all()
+    assert (seed.n_test==synthetic_uci_data).all()
     assert (seed.candidate_hit_rate==seed.candidate_hits/seed.n_test).all()
     (tmp_path/(tasks[-1]['id']+'.json')).unlink()
     assert not summarize_classification(tasks,tmp_path,out,'{task_id}.json')

@@ -49,7 +49,9 @@ from the current D30 `fca` environment, audited on 2026-10-30 with Python 3.13.1
 on Linux x86_64. It covers experiments, plotting, tests and their Python dependencies;
 it is not a complete system lockfile or a record of every historical experiment
 environment. Consult the reproduction guide and checkpoint metadata for historical
-runs. Installation in a fresh environment remains unverified. The commands above
+runs. Installation and all 116 tests were verified from an extracted review source
+package in an isolated Linux Python 3.13.14 environment on 2026-10-30.
+This does not establish cross-platform compatibility or rerun the paper experiments. The commands above
 are intended for a new environment; the existing D30 environment can be activated
 with `conda activate fca` without reinstalling packages.
 
