@@ -1,12 +1,12 @@
 # Reproducing the classification paper
 
-Documentation snapshot: 2026-10-29. This guide replaces the earlier provisional experimental design. The paper is a methods study; BABD and Elliptic are application cases. Legacy Bitcoin entity-split experiments are not part of this protocol.
+Documentation snapshot: 2026-10-30. This guide replaces the earlier provisional experimental design. The paper is a methods study; BABD and Elliptic are application cases. Legacy Bitcoin entity-split experiments are not part of this protocol.
 
 The [artifact and version map](paper_artifacts.md) identifies the reported results and historical code. Commands below describe future execution; none were executed during this documentation update. A current-code rerun is not automatically an exact replay of a historical source snapshot.
 
 ## 1. Environment and inputs
 
-Install from the repository root as described in [README](../../README.md). Full BABD defaults require `catboost` in addition to the `plot,boost` extras. The historical task metadata record Python 3.13.14, NumPy 2.4.6, pandas 3.0.3, scikit-learn 1.9.0, threadpoolctl 3.6.0, openpyxl 3.1.5 and XGBoost 3.2.0; BABD also records CatBoost 1.2.10 and LightGBM 4.6.0. These are recorded environment values, not a tested lockfile or a claim that installation has been independently reproduced. Consult the individual checkpoint for its complete environment and execution settings.
+Install from the repository root as described in [README](../../README.md). Full BABD defaults require `catboost` in addition to the `plot,boost` extras. The historical task metadata record Python 3.13.14, NumPy 2.4.6, pandas 3.0.3, scikit-learn 1.9.0, threadpoolctl 3.6.0, openpyxl 3.1.5 and XGBoost 3.2.0; BABD also records CatBoost 1.2.10 and LightGBM 4.6.0. Installation, dependency checks, all 116 tests and ten help entry points passed in an isolated Linux/Python 3.13.14 environment on 2026-10-30. The version snapshot is not a complete lockfile; full paper experiments were not rerun. Consult the individual checkpoint for its complete environment and execution settings.
 
 All paths below are relative to `OEO_DATA_ROOT` (default: repository `data/`).
 
@@ -39,7 +39,36 @@ Use `iris.data`, not `bezdekIris.data`; use only `adult+stretch.data` for
 Balloons, not the other variants in its archive. Preserve the original delimiters
 and do not add headers. These are experiment inputs, not requirements for the
 synthetic-fixture test suite. This list covers the five UCI classification datasets;
-it does not supply the separate COVID19 completeness input.
+the additional COVID19 input for completeness is given below.
+
+### Additional completeness input and historical input checks
+
+Download [COVID19 Surveillance](https://archive.ics.uci.edu/static/public/567/covid+19+surveillance.zip)
+and place `Surveillance.csv` at `raw/uci/covid19_surveillance/Surveillance.csv`.
+Keep its header and column order. The downloaded CSV was checked against the
+historical SHA-256 on 2026-10-30 and matched.
+
+The following hashes identify the retained experimental inputs (CSV/data files,
+not ZIP archives). Verify a file with `sha256sum /path/to/file` on Linux or
+`shasum -a 256 /path/to/file` on macOS. A mismatch requires checking the dataset
+version; do not alter data to force a matching result. BABD input/cleaning hashes
+and commands are in [the preparation guide](babd_preparation.md).
+
+| Input relative to the data root | Historical SHA-256 |
+|---|---|
+| `raw/uci/iris/iris.data` | `6f608b71a7317216319b4d27b4d9bc84e6abd734eda7872b71a458569e2656c0` |
+| `raw/uci/wine/wine.data` | `6be6b1203f3d51df0b553a70e57b8a723cd405683958204f96d23d7cd6aea659` |
+| `raw/uci/wdbc/wdbc.data` | `d606af411f3e5be8a317a5a8b652b425aaf0ff38ca683d5327ffff94c3695f4a` |
+| `raw/uci/balloons/adult+stretch.data` | `56f8efed1e7f2e5e21a7f78b1cb2df75860642667b145330b3a0ea196b2e3274` |
+| `raw/uci/lenses/lenses.data` | `711f22d5a4bed062bb715d39d23d54d2667206fbd97c94c7fd013ede47fb96c2` |
+| `raw/uci/covid19_surveillance/Surveillance.csv` | `d9967ea62243865399d0f70e011e8c7006ead5b60a858914ac7e29c87a4f1f08` |
+| `raw/public/elliptic/elliptic_txs_features.csv` | `fd7f83573443c9e302e371d3f110e3b6224160f5d1ed8a287757936127800ff0` |
+| `raw/public/elliptic/elliptic_txs_classes.csv` | `93e2e7b2405c735ba752bf6ba06b947561deddd1f5a8fc91e46f6a4c0e439493` |
+
+These values are recorded here so a fresh user does not need the local
+`audit.json` or historical checkpoints merely to identify the inputs.
+Historical workbooks/checkpoint reuse records are separate review artifacts,
+available through the handling editor; they are not required to start a new run.
 
 ## 2. Paper protocols
 
@@ -99,13 +128,13 @@ The optional root launcher defaults to an external watchdog; use `--no-watch` if
 
 ## 5. Regenerate figures without training
 
-The shared plotting module reads existing workbooks and writes PDF, PNG and same-basename CSV files. It does not train models. Use a separate output folder for review:
+After the commands in Section 4 finish, use their output paths below to generate PDF, PNG and same-basename CSV files. Plotting does not train models. If using separately supplied historical workbooks instead, replace the three input paths with their actual locations:
 
 ```sh
 python analysis/classification/plot_all.py \
-  --uci results/classification/uci_three_studies.xlsx \
-  --babd results/classification/babd_balanced_results.xlsx \
-  --babd-imbalanced results/classification/babd_imbalanced_results.xlsx \
+  --uci results/reproduction/uci/uci_three_studies.xlsx \
+  --babd results/reproduction/babd/babd_balanced_results.xlsx \
+  --babd-imbalanced results/reproduction/babd/babd_imbalanced_results.xlsx \
   --output results/figures/reproduction \
   --only uci_model_comparison_grid uci_rule_ablation_combined \
          uci_voting_model_comparison uci_candidate_set_sizes \
@@ -120,4 +149,4 @@ Classification workbooks contain `folds`, `per_seed`, `summary`, `tasks` and `ru
 
 Retain indexes, referenced checkpoints and every source checkpoint reachable through reuse links. Index provenance can describe the current task identity while a reused record retains earlier execution provenance; neither should be relabeled as a fresh run. See the [version audit](paper_artifacts.md#historical-source-and-reuse-audit).
 
-The dependency snapshot and BABD preparation tool are included; the latter passed same-environment comparison against the original script. Before public release, freeze the reviewed source snapshot, confirm remaining dataset version/license details, package selected workbooks and final figures/CSVs, preserve historical source fingerprints and reuse records, and choose a code license and archival identifier. Fresh-environment installation remains unverified. No paper experiments were rerun for this documentation update.
+The dependency snapshot and BABD preparation tool are included; the latter passed same-environment comparison against the original script. Before public release, freeze the reviewed source snapshot, confirm remaining dataset version/license details, package selected workbooks and final figures/CSVs, preserve historical source fingerprints and reuse records, and assign a public archival identifier. Confidential review licensing is already supplied; a separate MIT release is planned after acceptance. Installation and implementation tests passed in the isolated environment; full historical result reproduction remains a separate task. No paper experiments were rerun for this documentation update.

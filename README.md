@@ -14,6 +14,29 @@ The repository also includes the independent experimental code for the earlier
 [3WOC concept-construction paper](https://doi.org/10.3390/app15126486).
 Classification is the main workflow described below.
 
+## Quick verification (no research data required)
+
+From the extracted repository root, copy these commands into a Conda-enabled shell:
+
+```sh
+conda create -n fca-oeo-review python=3.13 -y
+conda activate fca-oeo-review
+python -m pip install -r requirements-reproduce.txt
+python -m pip install --no-deps --no-build-isolation -e .
+python -m pytest -q
+```
+
+Success: **116 passed** and exit code 0. If this environment already exists,
+activate it rather than creating it again. Stop if any command fails.
+The tests exercise direct/exhaustive rule agreement on tiny contexts, prediction,
+metrics, temporary experiment reports/checkpoint reuse, and plotting with test
+inputs. They require no dataset downloads and do not reproduce the full paper tables.
+The extracted package passed this check on Linux/Python 3.13.14.
+
+For full experiments, follow [data preparation and run commands](docs/classification/reproduction.md#1-environment-and-inputs),
+then [plot the generated results](docs/classification/reproduction.md#5-regenerate-figures-without-training).
+For the earlier 3WOC synthetic experiments, use the [two-command workflow](src/oeo_lab/experiments/construction/README.md#7-minimal-end-to-end-reproduction-of-the-six-synthetic-figures).
+
 ## 1. Environment and dependencies
 
 The reported experiments were run on a Linux workstation (D30). Commands below
