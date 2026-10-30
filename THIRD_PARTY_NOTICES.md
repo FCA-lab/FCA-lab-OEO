@@ -1,8 +1,10 @@
 # Third-party notices and code provenance
 
-The project's own code is provided under the root MIT license. Third-party
-material retains its original notices and terms. Dependencies, datasets and model
-weights are not relicensed by the project license.
+Copyright in the project's own code is held by the code contributors Zhuo Zhang
+and Yuhao Jin, as confirmed by the project author on 2026-10-30, with no other
+ownership agreements. Their code is provided under the root MIT license.
+Third-party material retains its original copyright notices and terms.
+Dependencies, datasets and model weights are not relicensed by the project license.
 
 ## Project code contributions
 
@@ -81,9 +83,6 @@ license. They are not bundled and remain subject to their providers' terms.
 
 ## Items to confirm before public release
 
-- The root copyright line uses the confirmed contributors' names. Confirm whether
-  the rights holder should instead include or name an institution, and that all
-  necessary contributor/institutional permissions are in place.
 - Confirm the copyright years to retain for earlier code; 2026 in the root license
   identifies this prepared package and does not establish the creation date of
   every inherited file.
