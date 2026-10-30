@@ -247,7 +247,21 @@ repository contains code, configurations and instructions; result workbooks and
 figures will be provided as optional archived artifacts. Links will be added when
 available. Raw data and results are ignored by Git and are not included simply by
 uploading this repository. The dependency snapshot and validated BABD preparation workflow are included.
-A fixed public release, code license, remaining dataset license/version details
-and final result-artifact packaging are still pending.
+MIT licensing and citation files have been prepared; copyright ownership and
+remaining contributor details still require confirmation. A fixed public release,
+remaining dataset license/version details and final result packaging are pending.
 Historical task provenance must be retained: the current source tree is not a
 single original execution version for every reported result.
+
+## 8. License, attribution and citation
+
+The project's own code is offered under the [MIT License](LICENSE), with
+third-party material subject to its original terms. See
+[third-party notices and contributor roles](THIRD_PARTY_NOTICES.md) for the
+LightGBM binning notice and copyright details still requiring confirmation before
+public release. The project license does not cover external datasets or weights.
+
+See [citation instructions](CITATION.md) for the classification manuscript and the
+published 3WOC paper. Cite the relevant paper(s) and record the software commit.
+Classification author metadata remain to be confirmed; no public release or
+archival DOI is claimed yet.
