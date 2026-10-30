@@ -72,9 +72,12 @@ export OEO_DATA_ROOT=/absolute/path/to/data
 ```
 
 This directory must contain the same `raw/...` layout. The BABD experiment uses
-the cleaned file, not the unprocessed download. A complete, verified raw-to-clean
-preparation recipe is still a release-preparation item; do not substitute another
-file and assume it reproduces the paper's results.
+the cleaned file, not the unprocessed download. Follow the
+[BABD preparation guide](docs/classification/babd_preparation.md) to obtain the
+recorded raw input and use `scripts/prepare_babd.py`. The tool preserves the
+historical cleaning rules and refuses existing output directories. Functional
+checks passed; in the same D30 environment, the packaged and original scripts
+produce byte-identical CSV and cleaning-report outputs.
 
 ## 3. Run the classification experiments
 

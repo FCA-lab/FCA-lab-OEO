@@ -13,7 +13,7 @@ All paths below are relative to `OEO_DATA_ROOT` (default: repository `data/`).
 | Experiment | Input and preparation evidence |
 |---|---|
 | Completeness / UCI | Files under `raw/uci/`; dataset-specific files, labels and excluded ID columns are specified in `completeness_config.py` and `uci_config.py`. Preserve the checkpoint input hashes. |
-| BABD | `raw/public/babd13/BABD-13-clean.csv` and `cleaning_report.json`. The report records 544,462 original rows, removal of 3,216 conflicting-label rows and 292 duplicate rows, leaving 540,954 rows and 148 features. Clean CSV SHA-256: `d380c00f6528f225c6840cb78c07fd28fa6794a98b9ed20a5c3eafcb6109f4e3`. A standalone, verified raw-to-clean preparation recipe still needs packaging. |
+| BABD | `raw/public/babd13/BABD-13-clean.csv` and `cleaning_report.json`. The report records 544,462 original rows, removal of 3,216 conflicting-label rows and 292 duplicate rows, leaving 540,954 rows and 148 features. Clean CSV SHA-256: `d380c00f6528f225c6840cb78c07fd28fa6794a98b9ed20a5c3eafcb6109f4e3`. The recovered cleaning rules are packaged in [the preparation guide](babd_preparation.md) and `scripts/prepare_babd.py`; functional checks passed, and outputs match the original script byte-for-byte in the same D30 environment. |
 | Elliptic | `raw/public/elliptic/elliptic_txs_features.csv` and `elliptic_txs_classes.csv`; input acquisition checksums are recorded in `audit.json`. Downloads: [features ZIP](https://data.pyg.org/datasets/elliptic/elliptic_txs_features.csv.zip), [classes ZIP](https://data.pyg.org/datasets/elliptic/elliptic_txs_classes.csv.zip). |
 
 Dataset download/version/license information must accompany the public package. Do not redistribute inputs merely because they were publicly downloadable.
