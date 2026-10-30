@@ -2,6 +2,7 @@
 
 **Confidential review version.** Use is limited to authorized manuscript review
 under [LICENSE](LICENSE). A separate MIT release is planned after acceptance.
+See the [reviewer guide](REVIEW_GUIDE.md) for implementation locations and review commands.
 
 Code for **Classification via Directly Extracted Necessary-Attribute Rules**.
 RC-OEO directly extracts necessary-attribute classification rules from OEO-concepts
