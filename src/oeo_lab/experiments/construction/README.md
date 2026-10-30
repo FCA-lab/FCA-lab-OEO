@@ -39,8 +39,8 @@ python -m pip install -e '.[plot]'
 On the authors' D30 workstation:
 
 ```sh
-cd /home/charles/projects/FCA-lab-OEO
-conda activate fca
+cd /path/to/FCA-lab-OEO
+conda activate fca-oeo
 ```
 
 On another machine, use its checkout path and environment. The experiment entry

@@ -37,8 +37,7 @@ PYTHONPATH=src python -m oeo_lab.experiments.classification.babd_experiment --dr
 PYTHONPATH=src python -m oeo_lab.experiments.classification.babd_experiment --experiments balanced --models rc-oeo random_forest --max-bins 5 --seeds 11 --per-class 50 --n-jobs 1
 ```
 
-第二条会实际训练；当前仅验证小型夹具及真实数据任务矩阵，不代表正式实验完成。
-TabPFN和Elliptic独立入口仍待分别核对基准版本、数据协议后实现。
+The second command runs training. The paper results are complete (840 balanced and 4,200 imbalanced tasks); see [the artifact map](paper_artifacts.md). The dated recovery notes below describe the 2026-10-15 state, not current progress. TabPFN is exploratory and is not required by either paper. For raw input preparation, see [the BABD preparation guide](babd_preparation.md).
 
 ## 2026-10-15 模型接口修复与恢复审核
 

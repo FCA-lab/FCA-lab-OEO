@@ -46,13 +46,13 @@ AP是average precision阶梯积分，不命名为梯形PR-AUC；不是概率校�
 每种子只有一个时间留出，跨种子平均反映随机模型变化，不是时间泛化置信区间。
 二分类没有1<候选数<2的部分缩减情况，相关部分集合指标为空/零属正常。
 
-## 运行（D30工程目录，fca环境）
+## Run from the repository root in the configured environment
 
 ```bash
 PYTHONPATH=src python -m oeo_lab.experiments.classification.elliptic_experiment --dry-run
 PYTHONPATH=src python -m oeo_lab.experiments.classification.elliptic_experiment --models rc-oeo random_forest --max-bins 5 --seeds 11 --n-jobs 1
 ```
 
-数据下载及全量结构检查已完成；正式实验尚未启动。人工小背景测试已通过。
+The paper experiment is complete: 60 training tasks and 90 prediction-variant records. See [the artifact map](paper_artifacts.md). The smoke-test note below is a historical record, not the current experiment status.
 
 2026-10-15 真实数据冒烟检查通过：按既定时间划分分别抽取200条训练、200条测试，93个本地特征；RC-OEO一次拟合验证全部/正/负三种组合，随机森林一次拟合；四行结果全部完成，检查点与Excel汇总通过。临时结果已自动清理，不进入正式论文结果。

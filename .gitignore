@@ -18,3 +18,7 @@ dist/
 !/results/README.md
 
 
+
+# Local operational records and backups (not public artifacts)
+/logs/
+/.local-backups/

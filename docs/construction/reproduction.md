@@ -1,6 +1,8 @@
 # Zhang2025 construction reproduction
 
-Run from the repository on D30 with the `fca` Python environment:
+This code accompanies **3WOC: A Fast Algorithm for Three-Way Object-Oriented Concept Acquisition** (2025), DOI: https://doi.org/10.3390/app15126486. The available results were regenerated in a different environment; they are not the original publication records, and matching historical timings is not a reproduction requirement.
+
+Prepare the environment using the root [README](../../README.md), then run from the repository root:
 
 ```sh
 python -m oeo_lab.experiments.construction.run --suite example
@@ -18,12 +20,12 @@ Memory (`result_container_bytes`, bytes) measures shallow `sys.getsizeof` of the
 
 Each checkpoint retains canonical concept triples as integer masks; complete sets are compared in both directions. Each concept is independently checked against necessary-attribute and extent-recovery definitions. These checks are outside timing. Agreement alone is not an independent completeness proof.
 
-Lenses: paper reports 229, whereas independent support-union enumeration gives 292 for the official 24x12 context. Treat 229 as an unresolved historical discrepancy, not an expected pass value. Paper count/timing values are not test thresholds.
+Lenses: the author confirmed that the published count 229 is a typographical error; the corrected count is 292 for the official 24x12 construction context. The configuration retains the published value as historical metadata, not a pass criterion. Classification uses a different condition context. Historical timing values are not test thresholds.
 
 Each result workbook: runs, summary (mean and sample standard deviation across five backgrounds), comparisons. Incomplete groups have no reported mean; counts and failure states remain visible. No data or GitHub upload is performed by this entry point.
 
 ## Three-dimensional figures
 
-Run `PYTHONPATH=src python -m oeo_lab.experiments.construction.plot` after the synthetic experiment completes. This independent postprocessing command reads the configured synthetic workbook's `summary` sheet and writes six figures (PNG and PDF) under `results/construction/figures/`. Paths, filename templates, formats and DPI are configured in the construction configuration's `plot` section. `--config` accepts an alternative configuration. Install plotting dependencies with `python -m pip install -e '.[plot]'` if needed.
+Run `PYTHONPATH=src python -m oeo_lab.experiments.construction.plot` after the synthetic experiment completes. This independent postprocessing command reads the configured synthetic workbook's `summary` sheet and writes six figures (PNG and PDF) under `results/construction/figures/`. Paths, filename templates, formats and DPI are configured in the construction configuration's `plot` section. `--config` accepts an alternative configuration. Use the dependency installation procedure in the root README; no separate plotting environment is required.
 
 The long table is pivoted using objects and density, separately for each attribute count and algorithm. Bars show means over the configured repeats; they do not show standard deviations, which remain in the workbook. Missing/duplicate grid entries, incomplete repeats and invalid metric values cause an error before plotting. Concept counts must agree between algorithms before a shared concept-count figure is produced. Timing figures retain the execution conditions of the input workbook; plotting does not rerun experiments. The bar3d design is adapted from the original `src/view/data_view.py` construction plotter, with numeric data handling replacing its CSV layout and eval calls.

@@ -1,5 +1,7 @@
 # 小样本分类实验
 
+This is an optional exploratory study, not part of either paper. Its additional environment and model weights are not included in requirements-reproduce.txt.
+
 ## 目的与边界
 比较 RC-OEO、TabPFN v2、随机森林、XGBoost 和 CatBoost 在有限标签条件下的表现。
 首先使用已有 Iris、Wine、WDBC；这不是 Nature 原论文数据集和流程的精确复现，也不能将本实验数值与论文表格直接比较。
@@ -24,8 +26,8 @@ checkpoint 记录依赖版本与权重 SHA256。缺失权重、依赖或超出 v
 当前实现不自动安装依赖或下载权重。
 
 ```bash
-cd /home/charles/projects/FCA-lab-OEO
-conda activate fca
+cd /path/to/FCA-lab-OEO
+conda activate YOUR_TABPFN_ENV
 PYTHONPATH=src python -m oeo_lab.experiments.classification.tabpfn_experiment --dry-run
 PYTHONPATH=src python -m oeo_lab.experiments.classification.tabpfn_experiment --n-jobs 1
 ```

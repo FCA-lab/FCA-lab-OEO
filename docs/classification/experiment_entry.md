@@ -1,8 +1,8 @@
 # 统一实验入口
 
 ```bash
-cd /home/charles/projects/FCA-lab-OEO
-conda activate fca
+cd /path/to/FCA-lab-OEO
+conda activate fca-oeo
 python run_experiment.py
 ```
 

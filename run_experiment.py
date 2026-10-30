@@ -15,11 +15,11 @@
     elliptic        elliptic_experiment.py
     training-size   training_size_experiment.py (exploratory; not required by the paper)
 
-2. D30 environment and commands
-    Enter the repository first; python below must refer to the fca environment.
-    cd /home/charles/projects/FCA-lab-OEO
-    conda activate fca
-    # Alternatively, replace python with /home/charles/miniconda3/envs/fca/bin/python.
+2. Environment and commands
+    Enter the repository and activate the environment prepared using README.md.
+    cd /path/to/FCA-lab-OEO
+    conda activate fca-oeo
+    # On the original D30 workstation, the existing environment is named fca.
     python run_experiment.py --help
     python run_experiment.py                         # Interactive menu; supervised
     python run_experiment.py --no-watch               # Interactive menu; direct execution

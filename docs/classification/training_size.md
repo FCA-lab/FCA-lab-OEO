@@ -1,5 +1,7 @@
 # 训练规模与规则决策实验
 
+This is an exploratory study, not required to reproduce either paper.
+
 独立入口 `training_size_experiment.py`，配置 `training_size_config.py`。
 目的：评价训练规模变化与规则数量、唯一预测可靠性、覆盖率、候选范围的关系；不预设单调性或性能优势。
 
@@ -12,8 +14,8 @@ main 中默认：比例 [0.2,0.4,0.6,0.8,1.0]，max_bins=[5,8,10]，种子 [11,3
 公共 evaluate_fold/runner 负责训练、候选指标、四类规则统计、时间、检查点与调度保护。结果位于 results/classification/training_size/，不覆盖其它实验。folds 保留实际二值属性数，training_design 工作表与独立 CSV 保留请求/实际训练比例、训练池、训练/测试数量及各类别数量。per_seed/summary 按实际 train_budget 分组；一个训练设置只提取一次规则。样本预算为实际总数，train_per_class 留空，因为各类不强制等量。
 
 ```bash
-cd /home/charles/projects/FCA-lab-OEO
-conda activate fca
+cd /path/to/FCA-lab-OEO
+conda activate fca-oeo
 PYTHONPATH=src python -m oeo_lab.experiments.classification.training_size_experiment --dry-run
 PYTHONPATH=src python -m oeo_lab.experiments.classification.training_size_experiment --n-jobs 3
 ```

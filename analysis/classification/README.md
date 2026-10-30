@@ -42,8 +42,8 @@ reproduction guide and checkpoint metadata for the recorded versions.
 On D30, first enter the repository and activate the existing environment:
 
 ```sh
-cd /home/charles/projects/FCA-lab-OEO
-conda activate fca
+cd /path/to/FCA-lab-OEO
+conda activate fca-oeo
 ```
 
 On another machine, use its checkout path and Python environment. Inspect the

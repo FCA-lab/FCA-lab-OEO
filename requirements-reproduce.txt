@@ -1,7 +1,7 @@
 # FCA-lab-OEO: scoped snapshot of the current D30 environment.
 # Read-only audit date: 2026-10-30.
 # Python: 3.13.14 (Anaconda); Linux x86_64, glibc 2.39.
-# Interpreter: /home/charles/miniconda3/envs/fca/bin/python
+# Environment audited: Conda environment named fca on D30.
 # Installer observed: pip 26.1.1.
 #
 # Scope: classification and 3WOC experiments, baseline models, paper plotting,

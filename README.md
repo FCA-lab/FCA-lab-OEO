@@ -246,7 +246,8 @@ earlier 3WOC code included. No archival release is designated yet. The planned
 repository contains code, configurations and instructions; result workbooks and
 figures will be provided as optional archived artifacts. Links will be added when
 available. Raw data and results are ignored by Git and are not included simply by
-uploading this repository. A fixed release snapshot, dependency specification,
-license and completed data-preparation instructions remain to be packaged.
+uploading this repository. The dependency snapshot and validated BABD preparation workflow are included.
+A fixed public release, code license, remaining dataset license/version details
+and final result-artifact packaging are still pending.
 Historical task provenance must be retained: the current source tree is not a
 single original execution version for every reported result.
