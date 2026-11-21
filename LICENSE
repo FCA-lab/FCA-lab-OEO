@@ -1,43 +1,21 @@
-FCA-lab-OEO — Limited Permission for Confidential Peer Review
+MIT License
 
 Copyright (c) 2026 Zhuo Zhang and Yuhao Jin
-All rights reserved, except as expressly permitted below.
 
-1. Scope and authorized recipients
-This permission applies only to the copyright holders' own code and documentation
-in this review version. It is granted to the handling editors, journal staff and
-reviewers authorized by the journal to evaluate the associated manuscript.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-2. Permitted use
-Authorized recipients may access, make necessary local copies, inspect, execute,
-test and locally modify this material solely to assess the manuscript and verify
-its methods and results. They may communicate findings through the journal's
-confidential review process. Necessary confidential editorial records may be
-retained in accordance with the journal's policies.
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-3. Restrictions
-No permission is granted to publish, publicly host, redistribute outside the
-authorized review process, sublicense, or use the copyright holders' material for
-other research, teaching, commercial development or other purposes. Additional
-uses require the copyright holders' written permission. Copyright and license
-notices must be retained. Handle review material under the journal's applicable
-confidentiality policies.
-
-4. Third-party material and existing rights
-Third-party code and dependencies retain their original copyrights and licenses,
-including the LightGBM MIT notice in THIRD_PARTY_NOTICES.md. The restrictions above
-do not limit rights granted under those third-party licenses, any rights already
-validly granted for earlier copies, or rights that cannot be restricted by law.
-External datasets and model weights are not licensed by this document.
-
-5. Planned public release
-The copyright holders plan to publish a separate MIT-licensed version after
-acceptance of the classification paper. This plan does not grant MIT permission
-for this review version. The public release must expressly carry the MIT license.
-
-6. Disclaimer
-THE MATERIAL IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
-FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. TO THE EXTENT PERMITTED BY LAW,
-THE COPYRIGHT HOLDERS SHALL NOT BE LIABLE FOR CLAIMS OR DAMAGES ARISING FROM
-THE MATERIAL OR ITS USE.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

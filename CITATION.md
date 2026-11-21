@@ -2,19 +2,15 @@
 
 Please cite the paper corresponding to the functionality used. Cite both when
 using both the classification and 3WOC construction methods. These are academic
-citation requests and do not expand the limited review permission in LICENSE.
-A separate MIT-licensed public release is planned after acceptance.
+citation requests, not additional conditions of the MIT license in LICENSE.
+This is a local release candidate; no archival DOI has been assigned.
 
 ## Classification
 
-**Classification via Directly Extracted Necessary-Attribute Rules**
-
-This is the manuscript associated with RC-OEO, direct necessary-attribute rule
-extraction and prediction. Its final author list and order require confirmation.
-No publication venue, acceptance status, year or DOI is assigned here. A complete
-BibTeX entry will be added after the authors confirm the manuscript citation;
-unverified author names must not be inferred from code contributors or the 3WOC
-paper. Until then, record the software commit used and the manuscript title.
+This software and the separate results accompany the submitted classification
+manuscript. Manuscript author information is provided in the submission itself;
+it is not required in this engineering package. Cite the software version and
+its archival DOI once assigned. No acceptance status or paper DOI is asserted.
 
 ## 3WOC concept construction
 
@@ -39,13 +35,12 @@ The title above follows the published metadata; “3WOC” is the algorithm name
 not an added prefix to the paper title. This repository includes regenerated
 construction experiments, not the original publication's experimental records.
 
-## Software version and outstanding metadata
+## Software citation metadata
 
-Record the commit used with `git rev-parse HEAD`. A fixed public release, archival
-DOI and release date have not been assigned. Do not cite a planned archive as an
-existing release. A machine-readable `CITATION.cff` can be added when the software
-contributor list, release metadata and preferred citation have been confirmed.
-
-Before release, confirm the classification paper authors and order, its citation
-year/status and any public manuscript identifier. Software contributors and paper
-authors are separate lists; see `THIRD_PARTY_NOTICES.md` for confirmed code roles.
+Software: FCA-lab-OEO, version 1.0.0 (proposed release tag v1.0.0).
+Software creators: Zhuo Zhang; Yuhao Jin. This follows the existing software
+copyright order and does not represent manuscript authorship order.
+Machine-readable Zenodo metadata are in `.zenodo.json`; see RELEASE_METADATA.md.
+No DOI or release date is invented. This local candidate is based on ac1f424,
+with documentation/license/metadata updates; cite the eventual release commit,
+not ac1f424 as though it already included these updates.

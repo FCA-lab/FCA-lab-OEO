@@ -1,6 +1,6 @@
 # Paper artifact and version map
 
-Audit/documentation date: 2026-10-29. Paper: **Classification via Directly Extracted Necessary-Attribute Rules**. Paths below are repository-relative unless stated otherwise. Figure basenames are used instead of figure numbers, which may change during typesetting.
+Audit/documentation date: 2026-10-29. Paper: **Classification via Directly Extracted Necessary Attribute Rules**. Paths below are repository-relative unless stated otherwise. Figure basenames are used instead of figure numbers, which may change during typesetting.
 
 ## Experiment-to-result map
 
@@ -45,7 +45,12 @@ All jobs are selected by `analysis/classification/plot_all.py`. Data functions a
 
 Default output is `results/figures/classification/`; a selected run also writes `manifest_selected.json` (full runs use `manifest.json`). Preserve manifests and source workbook checksums with released artifacts. See the reproduction guide for a plotting-only command.
 
-**Packaging status:** among these six final figure sets, the mounted default output folder currently contains `uci_rule_ablation_combined.{pdf,png,csv}`. The other five final PDF/PNG/CSV sets are in the author's manuscript workspace, not yet bundled in this repository. This documentation update did not copy or regenerate them. Before release, collect those exact final files, verify their workbook/version correspondence and record checksums. Do not assume older alternative heatmap/dot/tradeoff figures are the final manuscript figures.
+**Current candidate packaging:** the five workbooks are supplied in separate
+lite/full result ZIPs. Final PDF/PNG/CSV figure files and execution checkpoints
+are not included. Use the packaged plotting programs to regenerate the six
+figure sets from the workbooks; this preparation did not rerun plotting or
+collect final manuscript graphics. The source-history findings below describe
+historical audits, not newly bundled checkpoints or a new experimental run.
 
 ## Historical source and reuse audit
 
@@ -56,7 +61,7 @@ At the historical audit, HEAD was `38d219c`, with local plotting changes and unt
 | Completeness | All four checkpoints share a source fingerprint. All 20 fingerprinted source files were located: use `4e07be0` as the base, with `classifier.py` and `preprocessing/encoding.py` matching `e89b304`. | A mixed historical snapshot, not one clean commit. Static comparison found no relevant rule-extraction change for the tested contexts. No new computation was performed. |
 | BABD balanced | All 840 checkpoint source manifests match the 27 recorded source files at `1e6a8d1`. There are 99 records carrying `reuse_audit` and 741 without it. | A representative reuse chain and its original checksum were checked; a complete payload audit of all 99 balanced reuse records has **not** been established. |
 | BABD imbalanced | Current index contains 4,200 tasks and its source-file manifest matches the current computation sources. Reused checkpoint records retain earlier provenance. | Complete reuse-chain audit described below; this verifies record preservation, not a fresh execution. |
-| UCI / Elliptic | Representative checkpoint source manifests matched the inspected current sources in the prior read-only audit. | Do not treat representative checks as an exhaustive task-level historical audit. Preserve all checkpoint manifests in the release. |
+| UCI / Elliptic | Representative checkpoint source manifests matched the inspected current sources in the prior read-only audit. | Do not treat representative checks as an exhaustive task-level historical audit. Checkpoint manifests are not bundled in this candidate; the historical audit cannot be independently reconstructed from the workbooks alone. |
 
 For the completeness mixed snapshot, the two `e89b304` file checksums are:
 
@@ -91,11 +96,11 @@ Thus reused rules, predictions as represented by their stored result payloads, a
 ## Public-package completion checklist
 
 1. Select and freeze the release source, including the intended launcher and final plotting changes; retain historical manifests rather than rewriting them to the release commit.
-2. Available: `requirements-reproduce.txt` records the current D30 environment. Fresh-environment installation remains unverified; retain historical environment metadata separately.
+2. Available: `requirements-reproduce.txt` records the current D30 environment. Isolated Linux/Python 3.13.14 installation and 116 tests were verified on 2026-10-30 (see root README); this is not a fresh validation of the present candidate. Retain historical environment metadata separately.
 3. Available: the [BABD preparation guide](babd_preparation.md), script and same-environment validation. Dataset version/license details still need final confirmation.
-4. Package the five workbooks and selected final figures/CSVs/manifests; decide whether large checkpoints belong in a separate archive. Preserve the complete reuse graph if checkpoint auditability is claimed.
+4. The five workbooks are packaged separately. Figure outputs can be regenerated; checkpoints and their complete reuse graph are not included. Do not claim full checkpoint auditability from this candidate.
 5. Record final manuscript table selections and artifact checksums. Keep old exploratory outputs out of the paper package.
-6. The current package uses limited confidential-review permission. After acceptance, explicitly issue the planned MIT release and add its fixed repository/archive URL; follow `docs/licensing_stages.md`. Do not describe a planned release as already available.
+6. This local candidate carries MIT for software. Add fixed software/result archive identifiers after authorized publication. Experimental-result workbooks and their accompanying documentation use CC BY 4.0. See `docs/licensing_stages.md`.
 
 No computation code, configuration, result workbook or checkpoint was changed by this documentation update; no experiments were rerun and no files were uploaded to GitHub.
 

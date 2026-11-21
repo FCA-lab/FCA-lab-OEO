@@ -67,8 +67,9 @@ and commands are in [the preparation guide](babd_preparation.md).
 
 These values are recorded here so a fresh user does not need the local
 `audit.json` or historical checkpoints merely to identify the inputs.
-Historical workbooks/checkpoint reuse records are separate review artifacts,
-available through the handling editor; they are not required to start a new run.
+Historical workbooks are staged in the separate result candidate. Execution
+checkpoints are not included in either result ZIP; they are not required to start
+a new run. Do not claim a complete checkpoint audit from these archives alone.
 
 ## 2. Paper protocols
 
@@ -149,4 +150,4 @@ Classification workbooks contain `folds`, `per_seed`, `summary`, `tasks` and `ru
 
 Retain indexes, referenced checkpoints and every source checkpoint reachable through reuse links. Index provenance can describe the current task identity while a reused record retains earlier execution provenance; neither should be relabeled as a fresh run. See the [version audit](paper_artifacts.md#historical-source-and-reuse-audit).
 
-The dependency snapshot and BABD preparation tool are included; the latter passed same-environment comparison against the original script. Before public release, freeze the reviewed source snapshot, confirm remaining dataset version/license details, package selected workbooks and final figures/CSVs, preserve historical source fingerprints and reuse records, and assign a public archival identifier. Confidential review licensing is already supplied; a separate MIT release is planned after acceptance. Installation and implementation tests passed in the isolated environment; full historical result reproduction remains a separate task. No paper experiments were rerun for this documentation update.
+The dependency snapshot and BABD preparation tool are included; the latter passed same-environment comparison against the original script. Before public release, freeze the reviewed source snapshot, confirm remaining dataset version/license details, package selected workbooks and final figures/CSVs, preserve historical source fingerprints and reuse records, and assign a public archival identifier. This candidate carries the MIT software license; the separate result archives use CC BY 4.0. Neither candidate has been published. Installation and implementation tests passed in the isolated environment; full historical result reproduction remains a separate task. No paper experiments were rerun for this documentation update.

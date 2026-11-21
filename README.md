@@ -1,10 +1,11 @@
 # FCA-lab-OEO
 
-**Confidential review version.** Use is limited to authorized manuscript review
-under [LICENSE](LICENSE). A separate MIT release is planned after acceptance.
+**Local public-release candidate (2026-11-21).** The project code and associated
+documentation carry the [MIT license](LICENSE). This candidate has not been published.
+See [data sources](DATA_SOURCES.md) and the [reproduction entry guide](REPRODUCING.md).
 See the [reviewer guide](REVIEW_GUIDE.md) for implementation locations and review commands.
 
-Code for **Classification via Directly Extracted Necessary-Attribute Rules**.
+Code for **Classification via Directly Extracted Necessary Attribute Rules**.
 RC-OEO directly extracts necessary-attribute classification rules from OEO-concepts
 and combines supporting and excluding evidence to assign a unique label or retain
 candidate classes. The experiments cover rule completeness, UCI classification,
@@ -270,32 +271,27 @@ published typographical value 229.
 - [Classification experiment-to-figure workflow](analysis/classification/README.md)
 - [3WOC construction workflow](src/oeo_lab/experiments/construction/README.md)
 
-Public release is planned upon acceptance of the classification paper, with the
-earlier 3WOC code included. No archival release is designated yet. The planned
-repository contains code, configurations and instructions; result workbooks and
-figures will be provided as optional archived artifacts. Links will be added when
-available. Raw data and results are ignored by Git and are not included simply by
-uploading this repository. The dependency snapshot and validated BABD preparation workflow are included.
-Review-stage licensing and citation files have been prepared. Copyright in the project's
-own code is held by Zhuo Zhang and Yuhao Jin; remaining attribution details are
-listed in the third-party notices. A fixed public release,
-remaining dataset license/version details and final result packaging are pending.
-Historical task provenance must be retained: the current source tree is not a
-single original execution version for every reported result.
+This candidate prepares code and experimental evidence for manuscript review.
+The source includes configurations, dependency specifications and reproduction
+instructions. Separate lite/full result candidates contain the five workbooks;
+final figure files and execution checkpoints are not bundled. Plotting programs
+can regenerate the six figure sets from the result workbooks.
+External datasets must be obtained from their providers. Public archive links
+will be added after publication; no archival DOI or public release exists yet.
+Copyright in the software is held by Zhuo Zhang and Yuhao Jin. Historical task
+provenance is retained: this maintained source tree is not the original execution
+snapshot for every reported result. See RELEASE_METADATA.md for release metadata.
 
 ## 8. License, attribution and citation
 
-Copyright in the project's own code is held by the code contributors Zhuo Zhang
-and Yuhao Jin, with no other ownership agreements. This version is provided only
-for authorized confidential peer review under the [limited review permission](LICENSE);
-it is not an open-source release. A separate MIT-licensed version is planned after
-acceptance. Third-party material retains its original copyright and license terms;
-see [third-party notices and contributor roles](THIRD_PARTY_NOTICES.md).
-The review permission does not restrict rights independently granted by those
-third-party licenses and does not cover external datasets or weights.
-See [the two-stage release procedure](docs/licensing_stages.md) for the transition.
+Copyright (c) 2026 Zhuo Zhang and Yuhao Jin. Project code and associated
+documentation are provided under the [MIT license](LICENSE). Retain author
+attribution and [third-party notices](THIRD_PARTY_NOTICES.md). External datasets,
+model weights and the separate experimental-result archives are not relicensed
+by this software license. The result workbooks and result-package documentation
+use [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). See [release scope](docs/licensing_stages.md).
 
-See [citation instructions](CITATION.md) for the classification manuscript and the
-published 3WOC paper. Cite the relevant paper(s) and record the software commit.
-Classification author metadata remain to be confirmed; no public release or
-archival DOI is claimed yet.
+See [citation instructions](CITATION.md). The software candidate is based on
+`ac1f424329e5d5709077d5f6e8633c73a6f1555c`, with documentation/license changes only.
+It is not the original execution snapshot of every historical experiment.
+No public release, acceptance status or archival DOI is claimed.

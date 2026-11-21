@@ -1,0 +1,23 @@
+{
+  "title": "FCA-lab-OEO",
+  "upload_type": "software",
+  "version": "1.0.0",
+  "creators": [
+    {
+      "name": "Zhang, Zhuo"
+    },
+    {
+      "name": "Jin, Yuhao"
+    }
+  ],
+  "description": "Software for OEO necessary-attribute rule extraction, classification, and experimental reproduction, including the earlier three-way object-oriented concept-construction workflow. External datasets are not bundled. Experimental-result workbooks are supplied separately under CC BY 4.0. This metadata file is prepared locally for a future authorized release; no publication or archival DOI is asserted.",
+  "license": "mit",
+  "access_right": "open",
+  "keywords": [
+    "formal concept analysis",
+    "knowledge representation",
+    "necessary-attribute rules",
+    "rule-based classification",
+    "reproducibility"
+  ]
+}

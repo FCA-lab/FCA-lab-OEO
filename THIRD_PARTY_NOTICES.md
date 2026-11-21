@@ -2,9 +2,8 @@
 
 Copyright in the project's own code is held by the code contributors Zhuo Zhang
 and Yuhao Jin, as confirmed by the project author on 2026-10-30, with no other
-ownership agreements. Their code in this version is provided under the root limited review permission.
-A separate MIT-licensed release is planned after acceptance; that future plan
-does not expand the permission granted for the current review version.
+ownership agreements. Their code and associated documentation in this candidate are provided under
+the root MIT license. This local preparation does not assert public distribution.
 Third-party material retains its original copyright notices and terms.
 Dependencies, datasets and model weights are not relicensed by the project license.
 
@@ -80,16 +79,16 @@ This summary is not a replacement for the packages' complete license files,
 including bundled components. If redistributing dependencies or an environment
 image, retain and review their accompanying notices separately.
 
-Optional TabPFN weights and downloaded datasets are not covered by the root review
-permission. They are not bundled and remain subject to their providers' terms.
+Optional TabPFN weights and downloaded datasets are not covered by the root MIT
+license. They are not bundled and remain subject to their providers' terms.
 
 ## Items to confirm before public release
 
 - Confirm the copyright years to retain for earlier code; 2026 in the root license
   identifies this prepared package and does not establish the creation date of
   every inherited file.
-- Confirm any additional contributors to inherited plotting, experimental and
-  utility code not covered by the assignments above.
+- The project author confirmed that there are no additional code contributors;
+  the software contributors are Zhuo Zhang and Yuhao Jin only.
 - Confirm the original LightGBM porting revision if recoverable; retain this
   notice even if the exact historical revision remains unknown.
 - Complete the baseline paper reference and dataset license/version records.
