@@ -5,13 +5,13 @@
 From this source directory, follow README.md's Conda/Python 3.13 installation
 commands, then run `python -m pytest -q`. Tests contain small synthetic fixtures;
 they are not the full paper evaluation. The 116-pass Linux report in README is
-historical (2026-10-30), not a new run made while preparing this candidate.
+historical (2026-10-30), not a guarantee of results in a different environment.
 Use the recorded dependency snapshot; Python >=3.9 metadata is not a claim that
 all snapshot packages support every such Python version.
 
 ## 2. Regenerate figures from existing results (no training or raw data)
 
-Extract the separate lite result ZIP and run from this source directory:
+Place the result workbooks in a directory and run from this source directory:
 
 ```sh
 python analysis/classification/plot_all.py   --uci /absolute/path/to/paper-results-lite/uci_three_studies.xlsx   --babd /absolute/path/to/paper-results-lite/babd_balanced_results.xlsx   --babd-imbalanced /absolute/path/to/paper-results-lite/babd_imbalanced_results.xlsx   --output /absolute/path/to/new-figures
@@ -48,5 +48,5 @@ and memory; successful installation alone does not validate a full reproduction.
 Code is based on ac1f424; computational files and dependency specifications are
 unchanged. Historical results were produced by multiple recorded snapshots,
 not necessarily by this maintenance snapshot. See paper_artifacts.md for mappings.
-Neither result archive includes raw datasets or execution checkpoints. No full
-paper experiment or timing measurement was repeated for this candidate.
+Result workbooks alone do not contain the complete execution provenance;
+retain the corresponding checkpoints when a task-level audit is needed.

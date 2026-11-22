@@ -1,10 +1,9 @@
 # External data sources and input identity
 
-No external raw datasets or cleaned copies are distributed in GitHub or the
-candidate Zenodo archives. Download them from their providers, follow provider
+External raw datasets and cleaned copies are not bundled with this software. Download them from their providers, follow provider
 terms, and prepare them locally. The MIT license does not cover external data.
 Links and hashes below are retained from the 2026-10-30 acquisition audit;
-current download availability has not been rechecked during this packaging step.
+These historical checks do not guarantee continued download availability.
 Do not silently replace a historical input with a newer dataset version.
 
 | Dataset | Provider/source | Acquisition and preparation |
@@ -29,7 +28,7 @@ identifier or unrecorded version/date is invented here; consult provider terms.
 Set OEO_DATA_ROOT to your chosen data directory (default: repository data/).
 The following paths are relative to that root. Verify using `sha256sum` on Linux
 or `shasum -a 256` on macOS. A mismatch calls for checking source/version, not
-editing values to force the published result.
+editing values to force the recorded result.
 
 | Input relative to the data root | Historical SHA-256 |
 |---|---|

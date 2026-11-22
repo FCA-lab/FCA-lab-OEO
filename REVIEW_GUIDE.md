@@ -2,9 +2,9 @@
 
 This repository accompanies *Classification via Directly Extracted
 Necessary Attribute Rules*. It also includes the earlier 3WOC construction code.
-This local release candidate uses the [MIT license](LICENSE); third-party
+The software uses the [MIT license](LICENSE); third-party
 terms remain unchanged. For data acquisition and result-only reproduction,
-start with [REPRODUCING.md](REPRODUCING.md). It has not yet been published.
+start with [REPRODUCING.md](REPRODUCING.md).
 
 ## 1. Locate the implementation
 
@@ -59,7 +59,7 @@ real input data; it is not a data-free alternative to `--help`.
 
 [The artifact map](docs/classification/paper_artifacts.md) identifies the five
 classification workbooks, table selections, six figure names and historical
-source correspondence. The five workbooks are supplied in the separate lite/full result candidates.
+source correspondence. The plotting workflow reads the five workbooks listed in the artifact map.
 Final figure files and execution checkpoints are not included. The plotting
 programs regenerate figures from the workbooks; see REPRODUCING.md. Full experimental reruns are not required for code review.
 
@@ -70,11 +70,8 @@ Plotting commands and data filters are in [the plotting guide](analysis/classifi
 The earlier 3WOC workflow and its regenerated-result scope are documented
 [separately](src/oeo_lab/experiments/construction/README.md).
 
-## 5. Review snapshot
+## 5. Execution provenance
 
-When supplying a package, the maintainer should record its exact commit and
-archive checksum in the delivery message. Do not include `.git`, private backups,
-logs, private datasets or inactive MIT document templates. This candidate has not been publicly released; DOI links will be supplied
-after publication. The current code is a maintained
-snapshot; historical result provenance is retained separately and must not be
-relabeled as a fresh run of this snapshot.
+Record the exact code commit and input checksums with each run. The current code
+is a maintained snapshot; historical result provenance is retained separately
+and must not be relabeled as a fresh run of this snapshot.

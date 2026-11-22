@@ -115,9 +115,8 @@ retains the published value as historical information, not a pass criterion.
 Construction encodes the category column as an ordinary attribute; classification
 uses separate condition and decision contexts, so their counts need not agree.
 
-The planned release separates code/configuration/instructions from optional
-archives of regenerated workbooks and figures. Archive links will be added when
-available. No separate CSV is required to plot the supplied workbook.
+Code, configuration and instructions are maintained separately from generated
+workbooks and figures. No separate CSV is required to plot a result workbook.
 
 ## 4. Plotting commands and input selection
 

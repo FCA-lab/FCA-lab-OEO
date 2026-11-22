@@ -1,3 +1,6 @@
-# Experimental results
+# Experimental outputs
 
-The lite and full result archives are separate from the software. They are staged locally for author review; no Zenodo DOI exists yet. See [REPRODUCING.md](../REPRODUCING.md) for plotting and reruns. Neither archive contains raw inputs or checkpoints. The result workbooks and accompanying result-package documentation use [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), separately from the software MIT license. Give appropriate credit, link the license and indicate modifications.
+Experiments write workbooks under results/classification/. See the root README
+for expected filenames and REPRODUCING.md for plotting and execution commands.
+Results are excluded from Git. Existing workbooks can be read without training;
+a fresh experimental run requires the external inputs described in DATA_SOURCES.md.

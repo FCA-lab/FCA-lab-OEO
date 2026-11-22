@@ -1,7 +1,6 @@
 # FCA-lab-OEO
 
-**Local public-release candidate (2026-11-21).** The project code and associated
-documentation carry the [MIT license](LICENSE). This candidate has not been published.
+The project code and associated documentation use the [MIT license](LICENSE).
 See [data sources](DATA_SOURCES.md) and the [reproduction entry guide](REPRODUCING.md).
 See the [reviewer guide](REVIEW_GUIDE.md) for implementation locations and review commands.
 
@@ -264,34 +263,26 @@ regenerated in a different environment, not taken from the original publication'
 experimental records. The author-confirmed Lenses correction is **292**, not the
 published typographical value 229.
 
-## 7. Reproduction and release status
+## 7. Reproduction documentation
 
 - [Detailed classification protocol](docs/classification/reproduction.md)
 - [Paper artifacts, results and historical source correspondence](docs/classification/paper_artifacts.md)
 - [Classification experiment-to-figure workflow](analysis/classification/README.md)
 - [3WOC construction workflow](src/oeo_lab/experiments/construction/README.md)
 
-This candidate prepares code and experimental evidence for manuscript review.
-The source includes configurations, dependency specifications and reproduction
-instructions. Separate lite/full result candidates contain the five workbooks;
-final figure files and execution checkpoints are not bundled. Plotting programs
-can regenerate the six figure sets from the result workbooks.
-External datasets must be obtained from their providers. Public archive links
-will be added after publication; no archival DOI or public release exists yet.
-Copyright in the software is held by Zhuo Zhang and Yuhao Jin. Historical task
-provenance is retained: this maintained source tree is not the original execution
-snapshot for every reported result. See RELEASE_METADATA.md for release metadata.
+The source includes configurations, dependency specifications, data preparation
+and reproduction instructions for classification and 3WOC concept construction.
+External datasets must be obtained from their providers. The plotting programs
+read experiment workbooks; see REPRODUCING.md for expected filenames and commands.
+Historical task provenance is retained: this maintained source tree is not the
+original execution snapshot for every reported result.
 
 ## 8. License, attribution and citation
 
 Copyright (c) 2026 Zhuo Zhang and Yuhao Jin. Project code and associated
 documentation are provided under the [MIT license](LICENSE). Retain author
-attribution and [third-party notices](THIRD_PARTY_NOTICES.md). External datasets,
-model weights and the separate experimental-result archives are not relicensed
-by this software license. The result workbooks and result-package documentation
-use [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). See [release scope](docs/licensing_stages.md).
+attribution and [third-party notices](THIRD_PARTY_NOTICES.md). External datasets
+and model weights retain their providers' terms. The software license does not
+relicense separately supplied experimental data.
 
-See [citation instructions](CITATION.md). The software candidate is based on
-`ac1f424329e5d5709077d5f6e8633c73a6f1555c`, with documentation/license changes only.
-It is not the original execution snapshot of every historical experiment.
-No public release, acceptance status or archival DOI is claimed.
+See [citation instructions](CITATION.md) and [software metadata](RELEASE_METADATA.md).

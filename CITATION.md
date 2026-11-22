@@ -3,14 +3,13 @@
 Please cite the paper corresponding to the functionality used. Cite both when
 using both the classification and 3WOC construction methods. These are academic
 citation requests, not additional conditions of the MIT license in LICENSE.
-This is a local release candidate; no archival DOI has been assigned.
 
 ## Classification
 
-This software and the separate results accompany the submitted classification
-manuscript. Manuscript author information is provided in the submission itself;
-it is not required in this engineering package. Cite the software version and
-its archival DOI once assigned. No acceptance status or paper DOI is asserted.
+The classification implementation provides direct OEO necessary-attribute rule
+extraction and prediction. When citing the software, record its name, software
+creators, version and the exact commit used. Algorithm and experiment locations
+are listed in REVIEW_GUIDE.md.
 
 ## 3WOC concept construction
 
@@ -37,10 +36,7 @@ construction experiments, not the original publication's experimental records.
 
 ## Software citation metadata
 
-Software: FCA-lab-OEO, version 1.0.0 (proposed release tag v1.0.0).
-Software creators: Zhuo Zhang; Yuhao Jin. This follows the existing software
-copyright order and does not represent manuscript authorship order.
-Machine-readable Zenodo metadata are in `.zenodo.json`; see RELEASE_METADATA.md.
-No DOI or release date is invented. This local candidate is based on ac1f424,
-with documentation/license/metadata updates; cite the eventual release commit,
-not ac1f424 as though it already included these updates.
+Software: FCA-lab-OEO, version 1.0.0.
+Software creators: Zhuo Zhang; Yuhao Jin.
+Machine-readable metadata are in `.zenodo.json`; see RELEASE_METADATA.md.
+Software contributors and manuscript authors are distinct attribution categories.

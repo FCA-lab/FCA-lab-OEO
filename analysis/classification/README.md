@@ -206,4 +206,4 @@ needed for the documented paper configuration.
 The six figures describe the classification paper's experiments, not its concept
 structure illustrations. Earlier trial plotting functions were removed; their
 history is preserved at Git commit `1757a97`. Regenerated runtimes may differ
-from the published values when the execution environment changes.
+from the recorded values when the execution environment changes.

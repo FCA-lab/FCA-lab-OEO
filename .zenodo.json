@@ -10,7 +10,7 @@
       "name": "Jin, Yuhao"
     }
   ],
-  "description": "Software for OEO necessary-attribute rule extraction, classification, and experimental reproduction, including the earlier three-way object-oriented concept-construction workflow. External datasets are not bundled. Experimental-result workbooks are supplied separately under CC BY 4.0. This metadata file is prepared locally for a future authorized release; no publication or archival DOI is asserted.",
+  "description": "Software for OEO necessary-attribute rule extraction, classification, and experimental reproduction, including the three-way object-oriented concept-construction workflow associated with Zhang et al. (2025), A Fast Algorithm for Three-Way Object-Oriented Concept Acquisition (doi:10.3390/app15126486). Includes algorithms, tests, dependency specifications, data preparation and reproduction instructions. External datasets are obtained separately from their providers.",
   "license": "mit",
   "access_right": "open",
   "keywords": [

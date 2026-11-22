@@ -23,7 +23,6 @@ docs/classification/babd.md
 docs/classification/babd_preparation.md
 docs/classification/babd_scheduling.md
 docs/classification/checkpoint_reuse.md
-docs/classification/code_availability.tex
 docs/classification/code_review_20261018.md
 docs/classification/elliptic.md
 docs/classification/experiment_entry.md

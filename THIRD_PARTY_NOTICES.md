@@ -2,8 +2,8 @@
 
 Copyright in the project's own code is held by the code contributors Zhuo Zhang
 and Yuhao Jin, as confirmed by the project author on 2026-10-30, with no other
-ownership agreements. Their code and associated documentation in this candidate are provided under
-the root MIT license. This local preparation does not assert public distribution.
+ownership agreements. Their code and associated documentation are provided under
+the root MIT license.
 Third-party material retains its original copyright notices and terms.
 Dependencies, datasets and model weights are not relicensed by the project license.
 
@@ -23,7 +23,7 @@ Migration provenance is recorded in `docs/provenance.json`. A literature-based
 implementation should cite its algorithmic source, but that citation is distinct
 from licensing copied or adapted source code. The baseline source currently names
 *Concept acquisition approach of object-oriented concept lattices*; complete
-bibliographic details should be confirmed before release.
+bibliographic details are not recorded here.
 
 ## LightGBM binning implementation
 
@@ -82,7 +82,7 @@ image, retain and review their accompanying notices separately.
 Optional TabPFN weights and downloaded datasets are not covered by the root MIT
 license. They are not bundled and remain subject to their providers' terms.
 
-## Items to confirm before public release
+## Provenance notes
 
 - Confirm the copyright years to retain for earlier code; 2026 in the root license
   identifies this prepared package and does not establish the creation date of
@@ -92,5 +92,3 @@ license. They are not bundled and remain subject to their providers' terms.
 - Confirm the original LightGBM porting revision if recoverable; retain this
   notice even if the exact historical revision remains unknown.
 - Complete the baseline paper reference and dataset license/version records.
-
-No public release is asserted by these preparatory files.

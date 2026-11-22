@@ -16,7 +16,7 @@ All paths below are relative to `OEO_DATA_ROOT` (default: repository `data/`).
 | BABD | `raw/public/babd13/BABD-13-clean.csv` and `cleaning_report.json`. The report records 544,462 original rows, removal of 3,216 conflicting-label rows and 292 duplicate rows, leaving 540,954 rows and 148 features. Clean CSV SHA-256: `d380c00f6528f225c6840cb78c07fd28fa6794a98b9ed20a5c3eafcb6109f4e3`. The recovered cleaning rules are packaged in [the preparation guide](babd_preparation.md) and `scripts/prepare_babd.py`; functional checks passed, and outputs match the original script byte-for-byte in the same D30 environment. |
 | Elliptic | `raw/public/elliptic/elliptic_txs_features.csv` and `elliptic_txs_classes.csv`; input acquisition checksums are recorded in `audit.json`. Downloads: [features ZIP](https://data.pyg.org/datasets/elliptic/elliptic_txs_features.csv.zip), [classes ZIP](https://data.pyg.org/datasets/elliptic/elliptic_txs_classes.csv.zip). |
 
-Dataset download/version/license information must accompany the public package. Do not redistribute inputs merely because they were publicly downloadable.
+Dataset sources, input identities and preparation instructions are in DATA_SOURCES.md at the repository root. Do not redistribute inputs merely because they were publicly downloadable.
 
 
 ### UCI classification inputs
@@ -25,7 +25,7 @@ Download the following official UCI archives and extract the indicated files.
 Paths below are relative to `OEO_DATA_ROOT` (default: `data/`). Download links
 and archive members were checked on 2026-10-30; this check does not establish
 byte identity with the historical experimental inputs. Consult checkpoint hashes
-when matching the published results.
+when matching the recorded results.
 
 | Dataset | Official archive | Required destination |
 |---|---|---|
@@ -67,9 +67,8 @@ and commands are in [the preparation guide](babd_preparation.md).
 
 These values are recorded here so a fresh user does not need the local
 `audit.json` or historical checkpoints merely to identify the inputs.
-Historical workbooks are staged in the separate result candidate. Execution
-checkpoints are not included in either result ZIP; they are not required to start
-a new run. Do not claim a complete checkpoint audit from these archives alone.
+Historical workbooks provide experimental outputs. Execution checkpoints are
+not required to start a new run, but are needed for a complete task-level audit.
 
 ## 2. Paper protocols
 
@@ -123,7 +122,7 @@ PYTHONPATH=src python -m oeo_lab.experiments.classification.elliptic_experiment 
   --n-jobs 1 --results-root results/reproduction/elliptic
 ```
 
-These commands use each current entry point's remaining defaults, as described in the protocol table. In particular, UCI `main` overrides the legacy grid in `uci_config.py`; completeness has script-level defaults that are overridden explicitly above. Preserve the release snapshot rather than relying on defaults in a future revision. `--dry-run` still loads/validates inputs and constructs tasks; it is not a file-inventory command. Do not run concurrent writers against the same results directory.
+These commands use each current entry point's remaining defaults, as described in the protocol table. In particular, UCI `main` overrides the legacy grid in `uci_config.py`; completeness has script-level defaults that are overridden explicitly above. Preserve the code snapshot rather than relying on defaults in a future revision. `--dry-run` still loads/validates inputs and constructs tasks; it is not a file-inventory command. Do not run concurrent writers against the same results directory.
 
 The optional root launcher defaults to an external watchdog; use `--no-watch` if it is unavailable. The direct module commands above do not require the watchdog. The `oeo-classification` console entry now uses the unified launcher; reinstall the package after updating the entry-point configuration.
 
@@ -144,10 +143,15 @@ python analysis/classification/plot_all.py \
 
 `plot_all.py` selects jobs; `result_data.py` loads/aggregates results; `figures.py` renders them. Retain the generated manifest with the CSV/PDF/PNG files. Table values are selected from the workbooks using the filters in the artifact map; a complete automatic LaTeX-table export pipeline has not been verified.
 
-## 6. Checkpoints and release limitations
+## 6. Checkpoints and verification limits
 
 Classification workbooks contain `folds`, `per_seed`, `summary`, `tasks` and `rules` sheets (large rule exports are split across sheets). Completeness uses `results` and `differences`. Checkpoints retain task settings, source/environment provenance, counts and rule evidence; a separate per-object prediction file is not part of the established artifact package.
 
 Retain indexes, referenced checkpoints and every source checkpoint reachable through reuse links. Index provenance can describe the current task identity while a reused record retains earlier execution provenance; neither should be relabeled as a fresh run. See the [version audit](paper_artifacts.md#historical-source-and-reuse-audit).
 
-The dependency snapshot and BABD preparation tool are included; the latter passed same-environment comparison against the original script. Before public release, freeze the reviewed source snapshot, confirm remaining dataset version/license details, package selected workbooks and final figures/CSVs, preserve historical source fingerprints and reuse records, and assign a public archival identifier. This candidate carries the MIT software license; the separate result archives use CC BY 4.0. Neither candidate has been published. Installation and implementation tests passed in the isolated environment; full historical result reproduction remains a separate task. No paper experiments were rerun for this documentation update.
+The dependency snapshot and BABD preparation tool are included; the latter
+passed same-environment comparison against the original script. Installation and
+implementation tests passed in the isolated environment described above. This
+historical validation does not establish a fresh full experimental reproduction.
+Preserve source fingerprints, environment metadata and original reuse records
+when comparing historical results with a new run.
